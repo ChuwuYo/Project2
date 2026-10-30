@@ -1,0 +1,117 @@
+{
+  "split": "PrivateTest",
+  "n": 3589,
+  "accuracy": 0.7311,
+  "members": [
+    {
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A1_s0",
+      "best_epoch": 50,
+      "tta": true,
+      "acc": 0.7052
+    },
+    {
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A1_s1",
+      "best_epoch": 55,
+      "tta": true,
+      "acc": 0.7055
+    },
+    {
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A1_s2",
+      "best_epoch": 77,
+      "tta": true,
+      "acc": 0.7108
+    },
+    {
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A2_s0",
+      "best_epoch": 80,
+      "tta": true,
+      "acc": 0.7086
+    },
+    {
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A2_s1",
+      "best_epoch": 67,
+      "tta": false,
+      "acc": 0.6982
+    },
+    {
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A2_s2",
+      "best_epoch": 54,
+      "tta": true,
+      "acc": 0.7052
+    }
+  ],
+  "recall": {
+    "Angry": 0.6578,
+    "Disgust": 0.7091,
+    "Fear": 0.5057,
+    "Happy": 0.9147,
+    "Sad": 0.6212,
+    "Surprise": 0.8389,
+    "Neutral": 0.7556
+  },
+  "confusion_matrix": [
+    [
+      323,
+      5,
+      38,
+      12,
+      69,
+      4,
+      40
+    ],
+    [
+      10,
+      39,
+      3,
+      1,
+      0,
+      1,
+      1
+    ],
+    [
+      66,
+      0,
+      267,
+      13,
+      100,
+      34,
+      48
+    ],
+    [
+      10,
+      0,
+      11,
+      804,
+      14,
+      16,
+      24
+    ],
+    [
+      48,
+      0,
+      39,
+      20,
+      369,
+      5,
+      113
+    ],
+    [
+      11,
+      0,
+      29,
+      15,
+      6,
+      349,
+      6
+    ],
+    [
+      14,
+      2,
+      22,
+      31,
+      79,
+      5,
+      473
+    ]
+  ]
+}

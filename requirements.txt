@@ -1,0 +1,14 @@
+# 训练 / 评估
+# GPU 版 PyTorch 需另指定索引（scripts/setup_env.bat 检测到 NVIDIA 显卡会自动处理）：
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+torch>=2.3
+torchvision>=0.18
+numpy>=1.26
+matplotlib>=3.8
+scikit-learn>=1.4
+tqdm>=4.66
+# 前端演示（app.py）
+gradio>=6.0
+opencv-python-headless>=4.9,<5   # OpenCV 5 移除了 Haar 级联 CascadeClassifier
+# 测试
+pytest>=8.0

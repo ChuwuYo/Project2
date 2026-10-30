@@ -1,0 +1,7 @@
+# 最终模型目录（按 PublicTest 选定，每行一个；多行即概率平均集成）
+runs/A1_s0
+runs/A1_s1
+runs/A1_s2
+runs/A2_s0
+runs/A2_s1
+runs/A2_s2

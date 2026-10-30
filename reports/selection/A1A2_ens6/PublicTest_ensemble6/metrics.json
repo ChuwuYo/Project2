@@ -1,0 +1,117 @@
+{
+  "split": "PublicTest",
+  "n": 3589,
+  "accuracy": 0.7152,
+  "members": [
+    {
+      "run": "runs/A1_s0",
+      "best_epoch": 50,
+      "tta": true,
+      "acc": 0.7008
+    },
+    {
+      "run": "runs/A1_s1",
+      "best_epoch": 55,
+      "tta": true,
+      "acc": 0.6985
+    },
+    {
+      "run": "runs/A1_s2",
+      "best_epoch": 77,
+      "tta": true,
+      "acc": 0.703
+    },
+    {
+      "run": "runs/A2_s0",
+      "best_epoch": 80,
+      "tta": true,
+      "acc": 0.6991
+    },
+    {
+      "run": "runs/A2_s1",
+      "best_epoch": 67,
+      "tta": false,
+      "acc": 0.6877
+    },
+    {
+      "run": "runs/A2_s2",
+      "best_epoch": 54,
+      "tta": true,
+      "acc": 0.7002
+    }
+  ],
+  "recall": {
+    "Angry": 0.6702,
+    "Disgust": 0.6071,
+    "Fear": 0.498,
+    "Happy": 0.886,
+    "Sad": 0.6524,
+    "Surprise": 0.8458,
+    "Neutral": 0.6639
+  },
+  "confusion_matrix": [
+    [
+      313,
+      3,
+      27,
+      13,
+      63,
+      10,
+      38
+    ],
+    [
+      13,
+      34,
+      0,
+      1,
+      5,
+      1,
+      2
+    ],
+    [
+      45,
+      1,
+      247,
+      12,
+      93,
+      37,
+      61
+    ],
+    [
+      10,
+      0,
+      8,
+      793,
+      15,
+      20,
+      49
+    ],
+    [
+      52,
+      2,
+      43,
+      26,
+      426,
+      11,
+      93
+    ],
+    [
+      8,
+      0,
+      24,
+      15,
+      8,
+      351,
+      9
+    ],
+    [
+      33,
+      0,
+      20,
+      53,
+      91,
+      7,
+      403
+    ]
+  ]
+}
