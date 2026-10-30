@@ -32,6 +32,7 @@ HAAR = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_de
 DETECT_LOCK = threading.Lock()  # YuNet 检测器不是线程安全的
 DETECT_WIDTH = 320  # 实时模式下在缩小的画面上检测人脸，再把框映射回原图，速度快很多
 LIVE_SIZE = (640, 480)  # 向浏览器请求的摄像头分辨率，传输量小、延迟低
+LIVE_TITLE = "最大人脸的表情概率"
 
 
 # ---------------------------------------------------------------- 人脸检测与裁剪
@@ -102,17 +103,17 @@ def ensemble_probs(models, faces: list[np.ndarray]) -> np.ndarray:
     return (sum(model_probs(m, x, tta) for m, tta, _ in models) / len(models)).cpu().numpy()
 
 
-def prob_html(probs: np.ndarray | None) -> str:
-    """7 类概率按类别编号 0–6 固定顺序显示（不按大小排序），最高的一类加粗。"""
+def prob_html(probs: np.ndarray | None, title: str = "识别结果") -> str:
+    """7 类概率按类别编号 0–6 固定顺序显示（不按大小排序），最高的一类用强调色。"""
     probs = np.zeros(len(CLASSES)) if probs is None else probs
     top = int(probs.argmax()) if probs.any() else -1
     rows = "".join(
         f'<div class="prob-row{" top" if i == top else ""}">'
-        f'<span class="name">{i} {zh} {en}</span>'
+        f'<span class="name"><i>{i}</i><b>{zh}</b><small>{en}</small></span>'
         f'<span class="bar"><span style="width:{p * 100:.1f}%"></span></span>'
         f'<span class="pct">{p * 100:.1f}%</span></div>'
         for i, (zh, en, p) in enumerate(zip(CLASSES_ZH, CLASSES, probs, strict=True)))
-    return f'<div class="probs">{rows}</div>'
+    return f'<div class="probs"><div class="section-title">{title}</div>{rows}</div>'
 
 
 def predict(models, rgb: np.ndarray | None):
@@ -133,10 +134,10 @@ def detect_live(models, rgb: np.ndarray | None):
     与浏览器显示的画面一一对应（Gradio 发送的帧与预览一样做了镜像）。
     """
     if rgb is None:
-        return {"faces": []}, prob_html(None)
+        return {"faces": []}, prob_html(None, LIVE_TITLE)
     faces = detect_faces(rgb, max_width=DETECT_WIDTH)[:5]
     if not faces:
-        return {"faces": []}, prob_html(None)
+        return {"faces": []}, prob_html(None, LIVE_TITLE)
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     probs = ensemble_probs(models, [align_crop(gray, box, eyes) for box, eyes in faces])
     h, w = gray.shape
@@ -145,7 +146,7 @@ def detect_live(models, rgb: np.ndarray | None):
         top = int(p.argmax())
         out.append({"box": [float(box[0] / w), float(box[1] / h), float(box[2] / w), float(box[3] / h)],
                     "text": f"{CLASSES[top]} {p[top] * 100:.0f}%"})
-    return {"faces": out}, prob_html(probs[0])
+    return {"faces": out}, prob_html(probs[0], LIVE_TITLE)
 
 
 # 浏览器端画框：在摄像头 <video> 上叠一层 canvas。超过 1 秒没有新结果（停止录制）就清空。
@@ -174,13 +175,13 @@ DRAW_JS = """
   const fit = getComputedStyle(video).objectFit;   // 视频在元素里的实际显示区域
   const s = fit === 'cover' ? Math.max(vr.width / vw, vr.height / vh) : Math.min(vr.width / vw, vr.height / vh);
   const ox = (vr.width - vw * s) / 2, oy = (vr.height - vh * s) / 2;
-  ctx.lineWidth = 2; ctx.font = '14px sans-serif'; ctx.textBaseline = 'top';
+  ctx.lineWidth = 2; ctx.font = '500 14px "DM Sans", sans-serif'; ctx.textBaseline = 'top';
   for (const f of data.faces) {
     const [x, y, w, h] = f.box;
     const X = ox + x * vw * s, Y = oy + y * vh * s, W = w * vw * s, H = h * vh * s;
-    ctx.strokeStyle = '#ea580c'; ctx.strokeRect(X, Y, W, H);
+    ctx.strokeStyle = '#d97757'; ctx.strokeRect(X, Y, W, H);
     const tw = ctx.measureText(f.text).width + 8, ty = Math.max(0, Y - 20);
-    ctx.fillStyle = '#ea580c'; ctx.fillRect(X - 1, ty, tw, 20);
+    ctx.fillStyle = '#d97757'; ctx.fillRect(X - 1, ty, tw, 20);
     ctx.fillStyle = '#fff'; ctx.fillText(f.text, X + 3, ty + 3);
   }
 }
@@ -211,27 +212,74 @@ def make_examples() -> list[str]:
     return paths
 
 
+# 配色参考 Claude：暖米白底、陶土橙强调、衬线标题；暗色模式单独配色而不是简单反色。
+CLAY = gr.themes.Color(  # 陶土橙色阶（c500 为主色 #d97757）
+    c50="#fbf1ec", c100="#f6e0d6", c200="#efc2ae", c300="#e7a387", c400="#e08b6c",
+    c500="#d97757", c600="#c96442", c700="#a94f33", c800="#853f2a", c900="#5f2e1f", c950="#3d1d14",
+    name="clay")
+
+THEME = gr.themes.Base(
+    primary_hue=CLAY,
+    neutral_hue=gr.themes.colors.stone,
+    radius_size=gr.themes.sizes.radius_lg,
+    font=(gr.themes.GoogleFont("DM Sans", weights=(400, 500, 600)), "Microsoft YaHei", "PingFang SC",
+          "sans-serif"),
+).set(
+    body_background_fill="#faf9f5", body_background_fill_dark="#262624",
+    body_text_color="#141413", body_text_color_dark="#f5f4ee",
+    body_text_color_subdued="#73726c", body_text_color_subdued_dark="#a6a39a",
+    background_fill_primary="#ffffff", background_fill_primary_dark="#30302e",
+    background_fill_secondary="#f5f4ed", background_fill_secondary_dark="#2b2b29",
+    block_background_fill="#ffffff", block_background_fill_dark="#30302e",
+    block_border_color="#e8e6dc", block_border_color_dark="#3e3d39",
+    border_color_primary="#e8e6dc", border_color_primary_dark="#3e3d39",
+    block_shadow="none", block_shadow_dark="none",
+    block_label_background_fill="transparent", block_label_background_fill_dark="transparent",
+    block_label_text_color="#73726c", block_label_text_color_dark="#a6a39a",
+    block_label_border_width="0px",
+    button_primary_background_fill="#c96442", button_primary_background_fill_dark="#c96442",
+    button_primary_background_fill_hover="#b5573a", button_primary_background_fill_hover_dark="#d97757",
+    button_primary_text_color="#ffffff", button_primary_text_color_dark="#ffffff",
+    button_primary_border_color="transparent", button_primary_border_color_dark="transparent",
+    button_secondary_background_fill="#f0eee6", button_secondary_background_fill_dark="#3a3936",
+    button_secondary_background_fill_hover="#e8e6dc", button_secondary_background_fill_hover_dark="#45443f",
+    button_secondary_text_color="#141413", button_secondary_text_color_dark="#f5f4ee",
+    input_background_fill="#ffffff", input_background_fill_dark="#30302e",
+    color_accent="#d97757", color_accent_soft="#f6e0d6", color_accent_soft_dark="#4a3229",
+    link_text_color="#c96442", link_text_color_dark="#e08b6c",
+)
+
 CSS = """
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap");
+:root {--fer-track: #ece9df; --fer-fill: #c2bdb0; --fer-muted: #73726c; --fer-accent: #d97757;}
+.dark {--fer-track: #3a3936; --fer-fill: #6b6962; --fer-muted: #a6a39a; --fer-accent: #d97757;}
+#header {padding: 28px 4px 8px;}
+#header h1 {font-family: "Source Serif 4", Georgia, "Songti SC", "Microsoft YaHei", serif; font-weight: 500;
+            font-size: 2.1rem; letter-spacing: -0.01em; margin: 0;}
+#header h1 .mark {color: var(--fer-accent); margin-right: 0.3em;}
+#header p {color: var(--fer-muted); margin: 6px 0 0; font-size: 0.95rem;}
+.section-title {font-family: "Source Serif 4", Georgia, serif; font-size: 1.05rem; font-weight: 500;
+                margin: 0 0 4px;}
+.gradio-container {width: 100% !important; max-width: 1200px !important; margin: 0 auto !important;}
 canvas.face-overlay {position: absolute; pointer-events: none; z-index: 5;}
-.probs {display: flex; flex-direction: column; gap: 10px; padding: 8px 4px;}
-.prob-row {display: grid; grid-template-columns: 9.5em 1fr 3.8em; align-items: center; gap: 10px;}
-.prob-row .bar {height: 8px; background: var(--neutral-200); border-radius: 4px; overflow: hidden;}
-.prob-row .bar span {display: block; height: 100%; background: var(--neutral-400);}
-.prob-row.top {font-weight: 600;}
-.prob-row.top .bar span {background: var(--primary-500);}
+.probs {display: flex; flex-direction: column; gap: 14px; padding: 12px 6px;}
+.prob-row {display: grid; grid-template-columns: 9em 1fr 3.6em; align-items: center; gap: 14px;
+           color: var(--fer-muted);}
+.prob-row .name b {font-weight: 500; color: var(--body-text-color); margin-right: 0.35em;}
+.prob-row .name small {font-size: 0.8em;}
+.prob-row .name i {font-style: normal; font-size: 0.8em; margin-right: 0.6em; font-variant-numeric: tabular-nums;}
+.prob-row .bar {height: 6px; background: var(--fer-track); border-radius: 999px; overflow: hidden;}
+.prob-row .bar span {display: block; height: 100%; border-radius: 999px; background: var(--fer-fill);
+                     transition: width 0.25s ease;}
+.prob-row.top .name b, .prob-row.top .pct {color: var(--fer-accent); font-weight: 600;}
+.prob-row.top .bar span {background: var(--fer-accent);}
 .prob-row .pct {text-align: right; font-variant-numeric: tabular-nums;}
 """
 
-THEME = gr.themes.Default(
-    primary_hue=gr.themes.colors.orange,
-    neutral_hue=gr.themes.colors.gray,
-    font=(gr.themes.GoogleFont("Inter"), "Microsoft YaHei", "PingFang SC", "sans-serif"),
-)
-
-
 def build_app(models, runs: list[Path]) -> gr.Blocks:
     with gr.Blocks(title="人脸表情识别") as demo:
-        gr.Markdown(f"# 人脸表情识别\n{model_info(runs)}")
+        gr.HTML(f'<div id="header"><h1><span class="mark">✻</span>人脸表情识别</h1>'
+                f'<p>{model_info(runs)}</p></div>')
         with gr.Tab("实时摄像头"), gr.Row(equal_height=False):
             with gr.Column(scale=3):
                 # 摄像头只作输入（Gradio 官方推荐的分离写法）；把它同时作输出会让录制/停止按钮来回闪
@@ -240,8 +288,7 @@ def build_app(models, runs: list[Path]) -> gr.Blocks:
                                webcam_options=gr.WebcamOptions(constraints={"video": {
                                    "width": LIVE_SIZE[0], "height": LIVE_SIZE[1]}}))
             with gr.Column(scale=2):
-                gr.Markdown("**最大人脸的表情概率**")
-                live_probs = gr.HTML(prob_html(None))
+                live_probs = gr.HTML(prob_html(None, LIVE_TITLE))
                 live_faces = gr.JSON(visible="hidden")
         with gr.Tab("上传 / 拍照"), gr.Row(equal_height=False):
             with gr.Column(scale=1):
@@ -249,7 +296,6 @@ def build_app(models, runs: list[Path]) -> gr.Blocks:
                 run_btn = gr.Button("识别表情", variant="primary")
                 gr.Examples(make_examples(), inputs=image, label="示例（PublicTest，每类一张）")
             with gr.Column(scale=1):
-                gr.Markdown("**识别结果**")
                 label = gr.HTML(prob_html(None))
                 face = gr.Image(label="模型看到的人脸（48×48）", height=200, interactive=False)
 
@@ -273,5 +319,8 @@ if __name__ == "__main__":
     args.runs = args.runs or final_runs()
     torch.set_grad_enabled(False)
     print(f"推理设备: {DEVICE}")
-    build_app(load_runs(args.runs, DEVICE), args.runs).launch(
-        theme=THEME, css=CSS, share=args.share, inbrowser=args.inbrowser)
+    try:
+        build_app(load_runs(args.runs, DEVICE), args.runs).launch(
+            theme=THEME, css=CSS, share=args.share, inbrowser=args.inbrowser)
+    except KeyboardInterrupt:  # 关闭服务器时又按了一次 Ctrl+C，直接安静退出
+        print("已退出。")

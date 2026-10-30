@@ -4,40 +4,40 @@
   "accuracy": 0.7311,
   "members": [
     {
-      "run": "/content/fer/runs/A1_s0",
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A1_s0",
       "best_epoch": 50,
       "tta": true,
       "acc": 0.7052
     },
     {
-      "run": "/content/fer/runs/A1_s1",
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A1_s1",
       "best_epoch": 55,
       "tta": true,
       "acc": 0.7055
     },
     {
-      "run": "/content/fer/runs/A1_s2",
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A1_s2",
       "best_epoch": 77,
       "tta": true,
-      "acc": 0.7111
+      "acc": 0.7108
     },
     {
-      "run": "/content/fer/runs/A2_s0",
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A2_s0",
       "best_epoch": 80,
       "tta": true,
-      "acc": 0.7083
+      "acc": 0.7086
     },
     {
-      "run": "/content/fer/runs/A2_s1",
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A2_s1",
       "best_epoch": 67,
       "tta": false,
-      "acc": 0.6985
+      "acc": 0.6982
     },
     {
-      "run": "/content/fer/runs/A2_s2",
+      "run": "E:\\1Chuwu\\Projects\\AIOT\\Project2\\runs\\A2_s2",
       "best_epoch": 54,
       "tta": true,
-      "acc": 0.7055
+      "acc": 0.7052
     }
   ],
   "recall": {
