@@ -1,7 +1,7 @@
 @echo off
 rem Start the facial expression demo (Gradio web page) and open the browser. Close this window to stop.
-cd /d "%~dp0"
-call scripts\setup_env.bat || goto fail
+cd /d "%~dp0.."
+call "%~dp0setup_env.bat" || goto fail
 
 echo Starting demo page ...
 python app.py --inbrowser

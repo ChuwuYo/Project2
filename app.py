@@ -1,5 +1,8 @@
 """Gradio 演示：摄像头实时画框识别，或上传/拍照识别人脸表情。
 
+实时模式：服务器只返回人脸框坐标和概率（几百字节），框由浏览器直接画在摄像头画面上，
+不回传整张图片，延迟低；摄像头组件只作输入，录制/停止按钮状态稳定。
+
 流程：RGB 图 → YuNet 检测人脸 → 按双眼转正并裁剪 → 灰度 48x48 → 与评估完全相同的预处理和推理 → 7 类概率。
 前端只做演示，不参与评估；报告中的准确率全部来自 evaluate.py。
 
@@ -29,8 +32,6 @@ HAAR = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_de
 DETECT_LOCK = threading.Lock()  # YuNet 检测器不是线程安全的
 DETECT_WIDTH = 320  # 实时模式下在缩小的画面上检测人脸，再把框映射回原图，速度快很多
 LIVE_SIZE = (640, 480)  # 向浏览器请求的摄像头分辨率，传输量小、延迟低
-BOX_COLOR = (234, 88, 12)  # 画框颜色（RGB）
-LABELS = [f"{zh} {en}" for zh, en in zip(CLASSES_ZH, CLASSES, strict=True)]
 
 
 # ---------------------------------------------------------------- 人脸检测与裁剪
@@ -101,47 +102,89 @@ def ensemble_probs(models, faces: list[np.ndarray]) -> np.ndarray:
     return (sum(model_probs(m, x, tta) for m, tta, _ in models) / len(models)).cpu().numpy()
 
 
-def to_label(probs: np.ndarray) -> dict[str, float]:
-    return {name: float(p) for name, p in zip(LABELS, probs, strict=True)}
+def prob_html(probs: np.ndarray | None) -> str:
+    """7 类概率按类别编号 0–6 固定顺序显示（不按大小排序），最高的一类加粗。"""
+    probs = np.zeros(len(CLASSES)) if probs is None else probs
+    top = int(probs.argmax()) if probs.any() else -1
+    rows = "".join(
+        f'<div class="prob-row{" top" if i == top else ""}">'
+        f'<span class="name">{i} {zh} {en}</span>'
+        f'<span class="bar"><span style="width:{p * 100:.1f}%"></span></span>'
+        f'<span class="pct">{p * 100:.1f}%</span></div>'
+        for i, (zh, en, p) in enumerate(zip(CLASSES_ZH, CLASSES, probs, strict=True)))
+    return f'<div class="probs">{rows}</div>'
 
 
 def predict(models, rgb: np.ndarray | None):
-    """上传/拍照模式：返回 (7 类概率, 模型实际看到的 48x48 人脸)。"""
+    """上传/拍照模式：返回 (7 类概率 HTML, 模型实际看到的 48x48 人脸)。"""
     if rgb is None:
-        return None, None
+        return prob_html(None), None
     face, found = crop_face(rgb)
     if not found:
         gr.Warning("未检测到人脸，已使用整张图片，结果可能不准。")
     preview = cv2.resize(face, (192, 192), interpolation=cv2.INTER_NEAREST)
-    return to_label(ensemble_probs(models, [face])[0]), preview
+    return prob_html(ensemble_probs(models, [face])[0]), preview
 
 
-def annotate(models, rgb: np.ndarray | None):
-    """实时模式：检测画面中的人脸（最多 5 张），直接在摄像头画面上画框并标出表情。
+def detect_live(models, rgb: np.ndarray | None):
+    """实时模式：检测画面中的人脸（最多 5 张）并成批识别。
 
-    返回 (标注后的画面, 最大人脸的 7 类概率)。
+    返回 (人脸列表给浏览器画框, 最大人脸的 7 类概率 HTML)。坐标归一化到 0–1，
+    与浏览器显示的画面一一对应（Gradio 发送的帧与预览一样做了镜像）。
     """
     if rgb is None:
-        return None, None
+        return {"faces": []}, prob_html(None)
     faces = detect_faces(rgb, max_width=DETECT_WIDTH)[:5]
     if not faces:
-        return rgb, None
+        return {"faces": []}, prob_html(None)
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     probs = ensemble_probs(models, [align_crop(gray, box, eyes) for box, eyes in faces])
-    out = rgb.copy()
-    thick = max(2, rgb.shape[1] // 320)
-    font = 0.45 * thick
+    h, w = gray.shape
+    out = []
     for (box, _), p in zip(faces, probs, strict=True):
-        x, y, w, h = box.astype(int)
         top = int(p.argmax())
-        text = f"{CLASSES[top]} {p[top] * 100:.0f}%"
-        (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font, thick)
-        ty = max(y, th + 8)
-        cv2.rectangle(out, (x, y), (x + w, y + h), BOX_COLOR, thick)
-        cv2.rectangle(out, (x, ty - th - 8), (x + tw + 8, ty), BOX_COLOR, -1)
-        cv2.putText(out, text, (x + 4, ty - 4), cv2.FONT_HERSHEY_SIMPLEX, font,
-                    (255, 255, 255), thick, cv2.LINE_AA)
-    return out, to_label(probs[0])
+        out.append({"box": [float(box[0] / w), float(box[1] / h), float(box[2] / w), float(box[3] / h)],
+                    "text": f"{CLASSES[top]} {p[top] * 100:.0f}%"})
+    return {"faces": out}, prob_html(probs[0])
+
+
+# 浏览器端画框：在摄像头 <video> 上叠一层 canvas。超过 1 秒没有新结果（停止录制）就清空。
+DRAW_JS = """
+(data) => {
+  const video = document.querySelector('#live-cam video');
+  if (!video) return;
+  const host = video.parentElement;
+  let cv = host.querySelector('canvas.face-overlay');
+  if (!cv) {
+    cv = document.createElement('canvas');
+    cv.className = 'face-overlay';
+    host.style.position = 'relative';
+    host.appendChild(cv);
+  }
+  const vr = video.getBoundingClientRect(), hr = host.getBoundingClientRect();
+  Object.assign(cv.style, {left: (vr.left - hr.left) + 'px', top: (vr.top - hr.top) + 'px',
+                           width: vr.width + 'px', height: vr.height + 'px'});
+  cv.width = vr.width; cv.height = vr.height;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  clearTimeout(window.ferClear);
+  window.ferClear = setTimeout(() => ctx.clearRect(0, 0, cv.width, cv.height), 1000);
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !data || !data.faces) return;
+  const fit = getComputedStyle(video).objectFit;   // 视频在元素里的实际显示区域
+  const s = fit === 'cover' ? Math.max(vr.width / vw, vr.height / vh) : Math.min(vr.width / vw, vr.height / vh);
+  const ox = (vr.width - vw * s) / 2, oy = (vr.height - vh * s) / 2;
+  ctx.lineWidth = 2; ctx.font = '14px sans-serif'; ctx.textBaseline = 'top';
+  for (const f of data.faces) {
+    const [x, y, w, h] = f.box;
+    const X = ox + x * vw * s, Y = oy + y * vh * s, W = w * vw * s, H = h * vh * s;
+    ctx.strokeStyle = '#ea580c'; ctx.strokeRect(X, Y, W, H);
+    const tw = ctx.measureText(f.text).width + 8, ty = Math.max(0, Y - 20);
+    ctx.fillStyle = '#ea580c'; ctx.fillRect(X - 1, ty, tw, 20);
+    ctx.fillStyle = '#fff'; ctx.fillText(f.text, X + 3, ty + 3);
+  }
+}
+"""
 
 
 # ---------------------------------------------------------------- 界面
@@ -168,7 +211,16 @@ def make_examples() -> list[str]:
     return paths
 
 
-CSS = ".live {max-width: 720px; margin: 0 auto;}"  # 实时页居中
+CSS = """
+canvas.face-overlay {position: absolute; pointer-events: none; z-index: 5;}
+.probs {display: flex; flex-direction: column; gap: 10px; padding: 8px 4px;}
+.prob-row {display: grid; grid-template-columns: 9.5em 1fr 3.8em; align-items: center; gap: 10px;}
+.prob-row .bar {height: 8px; background: var(--neutral-200); border-radius: 4px; overflow: hidden;}
+.prob-row .bar span {display: block; height: 100%; background: var(--neutral-400);}
+.prob-row.top {font-weight: 600;}
+.prob-row.top .bar span {background: var(--primary-500);}
+.prob-row .pct {text-align: right; font-variant-numeric: tabular-nums;}
+"""
 
 THEME = gr.themes.Default(
     primary_hue=gr.themes.colors.orange,
@@ -180,25 +232,32 @@ THEME = gr.themes.Default(
 def build_app(models, runs: list[Path]) -> gr.Blocks:
     with gr.Blocks(title="人脸表情识别") as demo:
         gr.Markdown(f"# 人脸表情识别\n{model_info(runs)}")
-        with gr.Tab("实时摄像头"), gr.Column(elem_classes="live"):
-            # Gradio 官方“Unified Image”写法：摄像头组件同时作为输入和输出，框直接画在摄像头画面上
-            cam = gr.Image(sources=["webcam"], streaming=True, type="numpy", label="摄像头（点击录制开始实时识别）",
-                           webcam_options=gr.WebcamOptions(constraints={"video": {
-                               "width": LIVE_SIZE[0], "height": LIVE_SIZE[1]}}))
-            live_label = gr.Label(num_top_classes=3, label="最大人脸的表情")
+        with gr.Tab("实时摄像头"), gr.Row(equal_height=False):
+            with gr.Column(scale=3):
+                # 摄像头只作输入（Gradio 官方推荐的分离写法）；把它同时作输出会让录制/停止按钮来回闪
+                cam = gr.Image(sources=["webcam"], streaming=True, type="numpy", elem_id="live-cam",
+                               label="摄像头（点击录制开始实时识别）",
+                               webcam_options=gr.WebcamOptions(constraints={"video": {
+                                   "width": LIVE_SIZE[0], "height": LIVE_SIZE[1]}}))
+            with gr.Column(scale=2):
+                gr.Markdown("**最大人脸的表情概率**")
+                live_probs = gr.HTML(prob_html(None))
+                live_faces = gr.JSON(visible="hidden")
         with gr.Tab("上传 / 拍照"), gr.Row(equal_height=False):
             with gr.Column(scale=1):
                 image = gr.Image(sources=["upload", "webcam", "clipboard"], type="numpy", label="输入图像")
                 run_btn = gr.Button("识别表情", variant="primary")
                 gr.Examples(make_examples(), inputs=image, label="示例（PublicTest，每类一张）")
             with gr.Column(scale=1):
-                label = gr.Label(num_top_classes=7, label="识别结果")
+                gr.Markdown("**识别结果**")
+                label = gr.HTML(prob_html(None))
                 face = gr.Image(label="模型看到的人脸（48×48）", height=200, interactive=False)
 
-        cam.stream(lambda rgb: annotate(models, rgb), inputs=cam, outputs=[cam, live_label],
+        cam.stream(lambda rgb: detect_live(models, rgb), inputs=cam, outputs=[live_faces, live_probs],
                    stream_every=0.1, concurrency_limit=1, show_progress="hidden")
+        live_faces.change(None, inputs=live_faces, js=DRAW_JS, show_progress="hidden")
         run_btn.click(lambda rgb: predict(models, rgb), inputs=image, outputs=[label, face])
-        image.clear(lambda: (None, None), outputs=[label, face])
+        image.clear(lambda: (prob_html(None), None), outputs=[label, face])
     return demo
 
 

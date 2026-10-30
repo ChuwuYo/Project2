@@ -1,6 +1,6 @@
 @echo off
 rem Prepare the Python environment: create .venv and install packages on first run, reuse it afterwards.
-rem Called by start_demo.bat and verify_test.bat.
+rem Called by scripts\start_demo.bat and scripts\verify_test.bat.
 rem Keep every .bat file ASCII-only: cmd misreads UTF-8 batch files after a code page change.
 cd /d "%~dp0.."
 
