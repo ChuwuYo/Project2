@@ -38,7 +38,7 @@
 - 集成：A1×3 为 71.50%，A2×3 为 70.63%，A1+A2×6 为 71.52%（均为 PublicTest），按预先约定的规则取最高者。
 - 每次训练的 loss / accuracy 记录在 `runs/<实验>_s<种子>/log.csv`，曲线在同目录 `curves.png`。
 
-训练设置：SGD（momentum 0.9，Nesterov，lr 0.01，weight decay 5e-4），batch 128，ReduceLROnPlateau（按 PublicTest 准确率，减半，patience 5），PublicTest 连续 20 轮不提升即早停，最多 100 轮，GPU 上混合精度。训练在 Colab T4 上完成，每轮约 26 秒。
+训练设置：SGD（momentum 0.9，Nesterov，lr 0.01，weight decay 5e-4），batch 128，ReduceLROnPlateau（按 PublicTest 准确率，减半，patience 5），PublicTest 连续 20 轮不提升即早停，最多 100 轮，GPU 上混合精度。训练在 Colab T4 上完成，每轮约 26 秒；具体怎么训练、怎么用 Colab、怎么复现见 `docs/训练过程说明.md`。
 
 ## 数据检查
 
@@ -59,7 +59,7 @@ runs/             每次训练的权重、日志、曲线（压缩包只保留�
 reports/          数据检查、方案选择、PrivateTest 报告
 tests/            自动测试
 assets/           YuNet 人脸检测模型（演示用）
-docs/             项目要求 PDF、技术方案、项目代码详解
+docs/             项目要求 PDF、技术方案、项目代码详解、训练过程说明
 scripts/           Windows 一键脚本：start_demo.bat、verify_test.bat、setup_env.bat
 ```
 
