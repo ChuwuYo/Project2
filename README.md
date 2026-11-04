@@ -22,14 +22,14 @@
 | PublicTest | 3,589 | 早停、选 checkpoint、比较实验、决定 TTA、选集成方案 | `train.py`、`evaluate.py --split PublicTest` |
 | PrivateTest | 3,589 | 只做最终评估 | 只有 `evaluate.py` 会读取 |
 
-`tests/test_pipeline.py` 会自动检查：训练过程从不读取 PrivateTest，且除 `evaluate.py`、`dataset.py`、`check_data.py`、`app.py` 外没有源码出现 PrivateTest。
+`tests/test_pipeline.py`（8 项）会自动检查：训练过程从不读取 PrivateTest，且除 `evaluate.py`、`dataset.py`、`check_data.py`、`app.py` 外没有源码出现 PrivateTest。
 
 ## 实验（消融，每组只比上一组多一个改动）
 
 | 实验 | 改动 | PublicTest 准确率 | 说明 |
 |---|---|---|---|
 | A0 | 基线：无数据增强 | 58.87% ± 0.61（3 个种子；翻转 TTA 59.35% ± 0.78） | 第 17 轮后严重过拟合（训练集 99.7%） |
-| A1 | + 随机翻转、旋转、平移、缩放 | 69.19% ± 0.52（3 个种子；TTA 70.08% ± 0.23） | 提升约 10.6 个百分点，最明显的改进 |
+| A1 | + 随机翻转、旋转、平移、缩放 | 69.19% ± 0.52（3 个种子；TTA 70.08% ± 0.23） | 提升约 10.3 个百分点，最明显的改进 |
 | A2 | + 标签平滑 0.1 | 69.26% ± 0.46（3 个种子；TTA 69.50% ± 0.81） | 与 A1 的差距在种子波动范围内，不能说明更好 |
 | A3 | + Dropout 0.4 + RandomErasing | 68.83% ± 0.31（3 个种子；TTA 69.56% ± 0.21） | 未见稳定提升，略低于 A1/A2（差距在波动范围内） |
 
@@ -60,29 +60,33 @@ reports/          数据检查、方案选择、PrivateTest 报告
 tests/            自动测试
 assets/           YuNet 人脸检测模型（演示用）
 docs/             项目要求 PDF、技术方案、项目代码详解、训练过程说明
-scripts/           Windows 一键脚本：start_demo.bat、verify_test.bat、setup_env.bat
+scripts/          Windows 一键脚本：verify_test.bat（复核准确率）、start_demo.bat（演示）、train.bat（训练）、setup_env.bat（装环境）
 ```
 
 ## 使用（Windows）
 
-1. 把数据文件 `icml_face_data.csv` 放进 `data/`（压缩包不含数据）。
-2. 双击 `scripts\verify_test.bat`：在 PrivateTest 上复核准确率，应输出 0.7311。
+1. 把数据文件 `icml_face_data.csv`（或 `fer2013.csv`）放进 `data/`（压缩包不含数据）。
+2. 双击 `scripts\verify_test.bat`：用交付的 6 个模型在 PrivateTest 上复核准确率，应输出 0.7311。
 3. 双击 `scripts\start_demo.bat`：启动网页演示并自动打开浏览器。
+4. 想自己重新训练一个模型：双击 `scripts\train.bat`（默认 A1、种子 0，结果在 `runs_local\A1_s0\`；中断后再双击会接着训练）。详细步骤、怎么看结果见 `docs/训练过程说明.md` 第 7 节。
 
-首次运行会自动创建 `.venv` 并安装依赖；检测到 NVIDIA 显卡时自动安装 GPU 版 PyTorch，没有显卡也能用 CPU 运行。第一次读取数据会解析 CSV 并生成缓存 `data/fer2013.npz`（约 1 分钟），之后约 1 秒。
+首次运行会自动创建 `.venv` 并安装依赖；检测到 NVIDIA 显卡时自动安装 GPU 版 PyTorch，没有显卡也能用 CPU 运行（评估和演示可以，训练会非常慢）。第一次读取数据会解析 CSV 并生成缓存 `data/fer2013.npz`（约 1 分钟），之后约 1 秒。
 
 命令行：
 ```
 pip install -r requirements.txt
 # 有 NVIDIA 显卡时改装 GPU 版 PyTorch：
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
-python check_data.py                    # 数据检查
-python train.py --exp A1 --seed 0       # 训练一个配置（--resume 断点续训）
-python evaluate.py --split PublicTest   # 在验证集上比较
-python evaluate.py                      # 最终评估：final_runs.txt 中的模型，PrivateTest
-python app.py                           # 网页演示
-pytest tests                            # 自动测试
+python check_data.py                                        # 数据检查
+python evaluate.py                                          # 复核最终结果：final_runs.txt 中的 6 个模型，PrivateTest
+python train.py --exp A1 --seed 0 --out runs_local          # 自己训练一个模型（中断后加 --resume）
+python evaluate.py --runs runs_local/A1_s0 --split PublicTest   # 在验证集上看自己训练的模型
+python app.py                                               # 网页演示（最终模型）
+python app.py --runs runs_local/A1_s0                       # 网页演示（自己训练的模型）
+pytest tests                                                # 自动测试（8 项）
 ```
+
+`runs/` 里是交付的最终模型，自己训练请始终加 `--out runs_local`。即使忘了加，`train.py` 发现目录里已有模型（`best.pt`）也会报错停下，不会覆盖；`evaluate.py` 也不会用另一组模型的结果覆盖 `reports/` 里的最终 PrivateTest 报告。
 
 ## 网页演示
 

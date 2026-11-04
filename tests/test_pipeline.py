@@ -68,8 +68,22 @@ def test_train_never_reads_private_test_and_resumes(tmp_path, monkeypatch):
         assert (run_dir / name).exists()
 
 
+def test_train_refuses_to_overwrite(tmp_path, monkeypatch):
+    """输出目录里已有 best.pt 时，不加 --resume 必须报错退出，不能覆盖已有模型。"""
+    import pytest
+
+    run_dir = tmp_path / "A1_s0"
+    run_dir.mkdir()
+    (run_dir / "best.pt").write_bytes(b"final model")
+    monkeypatch.setattr(sys, "argv", ["train.py", "--exp", "A1", "--out", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        train.main()
+    assert (run_dir / "best.pt").read_bytes() == b"final model"
+
+
 def test_private_test_only_in_evaluate():
-    """源码层面：除 dataset.py 的定义和 evaluate.py 外，任何脚本都不出现 PrivateTest 字样。"""
+    """源码层面：只有 evaluate.py（评估）、dataset.py（子集定义）、check_data.py（数据检查）、
+    app.py（页头读取报告）出现 PrivateTest 字样，训练相关代码一律不出现。"""
     root = Path(__file__).resolve().parents[1]
     allowed = {"dataset.py", "evaluate.py", "check_data.py", "app.py"}
     for path in root.glob("*.py"):
@@ -81,7 +95,7 @@ def test_app_matches_evaluate():
     """前端单张推理与 evaluate.py 的批量推理结果一致（需要已训练的 runs/*/best.pt，否则跳过）。"""
     import pytest
 
-    runs = sorted(Path(__file__).resolve().parents[1].glob("runs/*/summary.json"))
+    runs = sorted(Path(__file__).resolve().parents[1].glob("runs/*/best.pt"))  # 压缩包只有 6 个最终模型带 best.pt
     if not runs:
         pytest.skip("还没有训练好的模型")
     import app

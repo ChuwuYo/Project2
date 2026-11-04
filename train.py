@@ -1,11 +1,14 @@
 """训练脚本：只用 Training 更新参数，只用 PublicTest 做早停、选 checkpoint 和 TTA 决策。
 
-用法：
-    python train.py --exp A2 --seed 0              # 正式训练
-    python train.py --exp A2 --seed 0 --resume     # 中断后从 last.pt 继续
-    python train.py --exp A2 --subset 2000 --epochs 2   # 小样本冒烟测试
+用法（自己训练时请加 --out runs_local，避免和 runs/ 里的最终模型混在一起）：
+    python train.py --exp A1 --seed 0 --out runs_local            # 正式训练
+    python train.py --exp A1 --seed 0 --out runs_local --resume   # 中断后从 last.pt 继续
+    python train.py --exp A1 --subset 2000 --epochs 2 --out runs_local   # 小样本试跑
 
-输出目录 runs/<exp>_s<seed>/：
+如果输出目录里已经有 best.pt（例如 runs/A1_s0 是最终模型之一），不加 --resume 会直接报错退出，
+不会覆盖已有结果。
+
+输出目录 <out>/<exp>_s<seed>/（默认 out 为 runs）：
     config.json   本次训练的全部配置
     log.csv       每轮 train/val 的 loss、acc、学习率、耗时
     best.pt       PublicTest 准确率最高的模型
@@ -93,6 +96,11 @@ def main() -> None:
     args = parse_args()
     config = {**vars(args), **EXPERIMENTS[args.exp], "out": str(args.out)}
     run_dir = args.out / f"{args.exp}_s{args.seed}"
+    # 防止误覆盖：目录里已有训练好的模型，只有在能续训（有 last.pt 且加了 --resume）时才继续
+    if (run_dir / "best.pt").exists() and not (args.resume and (run_dir / "last.pt").exists()):
+        raise SystemExit(f"{run_dir} 里已经有训练好的模型（best.pt），为防止覆盖已停止。\n"
+                         f"重新训练请换一个输出目录，例如加 --out runs_local；"
+                         f"中断后接着训练请加 --resume（需要 last.pt）。")
     run_dir.mkdir(parents=True, exist_ok=True)
     set_seed(args.seed)
     device = get_device()

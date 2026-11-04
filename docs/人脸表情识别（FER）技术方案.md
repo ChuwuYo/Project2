@@ -1,5 +1,11 @@
 # 人脸表情识别（FER）技术方案
 
+> **说明（2026-11-04）**：这是动手写代码之前的技术方案，保留下来作为过程记录，里面有些文件名、命令和做法后来改了，**不要照着它运行**。实际代码和用法以 `README.md`、`docs/项目代码详解.md`、`docs/训练过程说明.md` 为准。主要变化：
+> - 没有 `select.py`、`plot.py`、`data_check.py`、`stats.json`、`decision.json`：TTA 决定写在每个模型的 `summary.json`，曲线由 `train.py` 自己画，数据检查是 `check_data.py`，MEAN/STD 是 `dataset.py` 里的常数（由 `tests` 重新计算核对）。
+> - 评估命令是 `python evaluate.py`（读 `final_runs.txt` 中的 6 个模型），不是 `--ckpt runs/final/best.pt`；模型目录是 `runs/<实验>_s<种子>/`。
+> - 自己训练用 `python train.py --exp A1 --seed 0 --out runs_local`。
+> - 最终方案是 A1、A2 各 3 个种子的六模型集成，PrivateTest 73.11%。
+
 FER2013 · PyTorch · 单人实现 · 2026-10-27
 
 

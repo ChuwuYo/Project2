@@ -18,8 +18,9 @@ from torchvision.transforms import v2
 from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parent
-CSV_PATH = ROOT / "data" / "icml_face_data.csv"
-CACHE_PATH = ROOT / "data" / "fer2013.npz"  # 首次解析 CSV 后的缓存，之后加载只需约 1 秒
+DATA_DIR = ROOT / "data"
+CSV_NAMES = ("icml_face_data.csv", "fer2013.csv")  # 两种常见文件名，列顺序不同也能读
+CACHE_PATH = DATA_DIR / "fer2013.npz"  # 首次解析 CSV 后的缓存，之后加载只需约 1 秒
 
 SPLITS = ("Training", "PublicTest", "PrivateTest")
 CLASSES = ("Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral")
@@ -38,10 +39,12 @@ def _parse_csv(csv_path: Path) -> dict[str, np.ndarray]:
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = [h.strip() for h in next(reader)]
-        if header != ["emotion", "Usage", "pixels"]:
-            raise ValueError(f"CSV 列名不符: {header}")
+        if sorted(header) != ["Usage", "emotion", "pixels"]:
+            raise ValueError(f"CSV 列名应为 emotion、Usage、pixels（顺序不限），实际为 {header}")
+        col = {name: header.index(name) for name in header}  # 按列名取值，不依赖列顺序
         rows = tqdm(reader, desc="解析 CSV", unit=" 行", total=35887)
-        for line_no, (emotion, usage, pixels) in enumerate(rows, start=2):
+        for line_no, row in enumerate(rows, start=2):
+            emotion, usage, pixels = row[col["emotion"]], row[col["Usage"]], row[col["pixels"]]
             pix = np.array(pixels.split(), dtype=np.uint8)
             if pix.size != IMG_SIZE * IMG_SIZE:
                 raise ValueError(f"第 {line_no} 行像素数为 {pix.size}，应为 2304")
@@ -55,11 +58,20 @@ def _parse_csv(csv_path: Path) -> dict[str, np.ndarray]:
     }
 
 
-def load_all(csv_path: Path = CSV_PATH, cache_path: Path = CACHE_PATH) -> dict[str, np.ndarray]:
-    """读取全部数据（优先读缓存）。只给 check_data.py 做数据检查用。"""
+def find_csv() -> Path:
+    """在 data/ 里找数据 CSV：icml_face_data.csv 或 fer2013.csv。"""
+    for name in CSV_NAMES:
+        if (DATA_DIR / name).exists():
+            return DATA_DIR / name
+    raise FileNotFoundError(f"没有找到数据文件：请把 {' 或 '.join(CSV_NAMES)} 放进 {DATA_DIR}")
+
+
+def load_all(csv_path: Path | None = None, cache_path: Path = CACHE_PATH) -> dict[str, np.ndarray]:
+    """读取全部数据（优先读缓存）。load_split 和 check_data.py 通过它取数据。"""
     if cache_path.exists():
         with np.load(cache_path) as d:
             return {k: d[k] for k in d.files}
+    csv_path = csv_path or find_csv()
     print(f"首次运行：解析 {csv_path.name} 并缓存到 {cache_path.name}（只需一次，约 1 分钟）")
     data = _parse_csv(csv_path)
     print("正在写入缓存 ...")

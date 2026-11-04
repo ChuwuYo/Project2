@@ -8,6 +8,9 @@
     python evaluate.py --runs runs/A3_s0                      # 单模型，PrivateTest 最终评估
     python evaluate.py --runs runs/A3_s0 runs/A3_s1 runs/A3_s2   # 多模型概率平均（集成）
     python evaluate.py --runs runs/A3_s0 --split PublicTest   # 在验证集上比较方案
+    python evaluate.py --runs runs_local/A1_s0 --split PublicTest   # 检查自己新训练的模型
+
+reports/ 里已有另一组模型的 PrivateTest 结果时会停止，不会覆盖最终报告。
 """
 
 from __future__ import annotations
@@ -32,6 +35,16 @@ def parse_args() -> argparse.Namespace:
     args = p.parse_args()
     args.runs = args.runs or final_runs()
     return args
+
+
+def check_not_overwriting(report: Path, runs: list[Path]) -> None:
+    """已有的 PrivateTest 报告属于另一组模型时停止，避免覆盖最终结果。同一组模型复核可以覆盖。"""
+    if not report.exists() or "PrivateTest" not in report.parent.name:
+        return
+    old = sorted(Path(m["run"]).name for m in json.loads(report.read_text())["members"])
+    if old != sorted(Path(r).name for r in runs):
+        raise SystemExit(f"{report.parent} 里已有另一组模型 {old} 的 PrivateTest 结果，为防止覆盖已停止。\n"
+                         f"PrivateTest 只用于最终方案的一次评估；比较自己训练的模型请用 --split PublicTest。")
 
 
 def main() -> None:
@@ -61,6 +74,7 @@ def main() -> None:
     # ---- 保存结果 ----
     name = args.split if len(args.runs) == 1 else f"{args.split}_ensemble{len(args.runs)}"
     out_dir = args.out / name
+    check_not_overwriting(out_dir / "metrics.json", args.runs)
     out_dir.mkdir(parents=True, exist_ok=True)
     cm = confusion_matrix(y.numpy(), pred, labels=range(len(CLASSES)))
     report = classification_report(y.numpy(), pred, target_names=CLASSES, digits=4,

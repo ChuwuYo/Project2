@@ -193,8 +193,12 @@ def model_info(runs: list[Path]) -> str:
     """页头信息：测试集准确率只读取 evaluate.py 生成的报告，前端不做任何评估。"""
     name = "PrivateTest" if len(runs) == 1 else f"PrivateTest_ensemble{len(runs)}"
     report = Path("reports") / name / "metrics.json"
-    acc = f"PrivateTest 准确率 {json.loads(report.read_text())['accuracy'] * 100:.2f}%" \
-        if report.exists() else "PrivateTest 尚未评估"
+    acc = "这组模型没有 PrivateTest 结果"
+    if report.exists():
+        metrics = json.loads(report.read_text())
+        # 只有报告里的模型和当前加载的模型完全相同时才显示，避免把别的模型的成绩挂上来
+        if sorted(Path(m["run"]).name for m in metrics["members"]) == sorted(r.name for r in runs):
+            acc = f"PrivateTest 准确率 {metrics['accuracy'] * 100:.2f}%"
     kind = "ResNet18" if len(runs) == 1 else f"{len(runs)} × ResNet18 集成"
     return f"{kind} · FER2013 从头训练 · {acc}"
 

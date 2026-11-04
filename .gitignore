@@ -11,3 +11,5 @@ examples/
 # 参考项目只保留地址记录（references.yaml），源码不纳入版本库
 references/*
 !references/references.yaml
+runs_local/
+runs_test/
