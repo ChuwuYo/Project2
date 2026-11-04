@@ -26,7 +26,7 @@
 | A2 三个 seed 集成 | 0.7063 |
 | A1+A2 六模型集成 | **0.7152** |
 
-选定：A1+A2 六模型集成（PublicTest 最高；与 A1 三模型集成仅差 1 张图，按预先约定的规则取最高者）。写入 final_runs.txt。
+选定：A1+A2 六模型集成（PublicTest 最高；与 A1 三模型集成仅差 1 张图，按预先约定的规则取最高者）。写入 runs/final_runs.txt。
 明细在 reports/selection/。
 
 ## 消融：A0–A3 各 3 个 seed 的 PublicTest 均值 ± 标准差（阶段 7 补齐）

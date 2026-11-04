@@ -54,8 +54,8 @@ train.py          训练（A0–A3），断点续训
 evaluate.py       评估；唯一读取 PrivateTest 的脚本；支持多模型集成
 check_data.py     数据检查
 app.py            Gradio 网页演示（实时摄像头 / 上传拍照）
-final_runs.txt    最终模型列表（多模型平均；evaluate.py 和 app.py 默认读取）
-best_single.txt   最佳单模型（A1_s2；evaluate.py / app.py 加 --single 时读取）
+runs/final_runs.txt    最终模型列表（多模型平均；evaluate.py 和 app.py 默认读取）
+runs/best_single.txt   最佳单模型（A1_s2；evaluate.py / app.py 加 --single 时读取）
 runs/             每次训练的权重、日志、曲线（压缩包只保留最终 6 个模型的 best.pt）
 reports/          数据检查、方案选择、PrivateTest 报告
 tests/            自动测试
@@ -79,8 +79,8 @@ pip install -r requirements.txt
 # 有 NVIDIA 显卡时改装 GPU 版 PyTorch：
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 python check_data.py                                        # 数据检查
-python evaluate.py                                          # 复核最终结果：final_runs.txt 中的 6 个模型，PrivateTest
-python evaluate.py --single                                 # 最佳单模型 best_single.txt（A1_s2），PrivateTest
+python evaluate.py                                          # 复核最终结果：runs/final_runs.txt 中的 6 个模型，PrivateTest
+python evaluate.py --single                                 # 最佳单模型 runs/best_single.txt（A1_s2），PrivateTest
 python train.py --exp A1 --seed 0 --out runs_local          # 自己训练一个模型（中断后加 --resume）
 python evaluate.py --runs runs_local/A1_s0 --split PublicTest   # 在验证集上看自己训练的模型
 python app.py                                               # 网页演示（最终模型）

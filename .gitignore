@@ -1,6 +1,8 @@
 data/*.csv
 data/*.npz
-runs/
+runs/*
+!runs/final_runs.txt
+!runs/best_single.txt
 __pycache__/
 .pytest_cache/
 .ruff_cache/

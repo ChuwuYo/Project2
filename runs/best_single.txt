@@ -1,2 +1,2 @@
 # 最佳单模型（按 PublicTest 准确率选定，含翻转 TTA 判断）
-runs/A1_s2
+A1_s2

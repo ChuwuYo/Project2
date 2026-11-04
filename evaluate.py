@@ -4,7 +4,7 @@
 是否使用 TTA 由训练时在 PublicTest 上得出的 summary.json 决定。
 
 用法：
-    python evaluate.py                       # 用 final_runs.txt 中的最终模型做 PrivateTest 评估
+    python evaluate.py                       # 用 runs/final_runs.txt 中的最终模型做 PrivateTest 评估
     python evaluate.py --runs runs/A3_s0                      # 单模型，PrivateTest 最终评估
     python evaluate.py --runs runs/A3_s0 runs/A3_s1 runs/A3_s2   # 多模型概率平均（集成）
     python evaluate.py --runs runs/A3_s0 --split PublicTest   # 在验证集上比较方案
@@ -29,9 +29,9 @@ from utils import accuracy, final_runs, get_device, load_runs, make_loader, plot
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="FER2013 模型评估")
     p.add_argument("--runs", type=Path, nargs="+", default=None,
-                   help="一个或多个训练输出目录；缺省时读取 final_runs.txt")
+                   help="一个或多个训练输出目录；缺省时读取 runs/final_runs.txt")
     p.add_argument("--single", action="store_true",
-                   help="使用 best_single.txt 里的最佳单模型（缺省用 final_runs.txt 的多模型平均）")
+                   help="使用 runs/best_single.txt 里的最佳单模型（缺省用 runs/final_runs.txt 的多模型平均）")
     p.add_argument("--split", choices=["PublicTest", "PrivateTest"], default="PrivateTest")
     p.add_argument("--out", type=Path, default=Path("reports"))
     args = p.parse_args()

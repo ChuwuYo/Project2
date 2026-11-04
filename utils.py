@@ -97,14 +97,14 @@ def load_model(ckpt_path: str | Path, device: torch.device) -> tuple[torch.nn.Mo
     return model, ckpt
 
 
-FINAL_RUNS_FILE = Path(__file__).resolve().parent / "final_runs.txt"
-BEST_SINGLE_FILE = Path(__file__).resolve().parent / "best_single.txt"
+FINAL_RUNS_FILE = Path(__file__).resolve().parent / "runs" / "final_runs.txt"
+BEST_SINGLE_FILE = Path(__file__).resolve().parent / "runs" / "best_single.txt"
 
 
 def final_runs(single: bool = False) -> list[Path]:
     """读取最终模型目录（都按 PublicTest 选定，每行一个，# 开头为注释）。
 
-    single=False 读 final_runs.txt（多模型概率平均）；single=True 读 best_single.txt（最佳单模型）。
+    single=False 读 runs/final_runs.txt（多模型概率平均）；single=True 读 runs/best_single.txt（最佳单模型）。
     """
     path = BEST_SINGLE_FILE if single else FINAL_RUNS_FILE
     lines = path.read_text(encoding="utf-8").splitlines()

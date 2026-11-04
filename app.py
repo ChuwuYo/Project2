@@ -7,7 +7,7 @@
 前端只做演示，不参与评估；报告中的准确率全部来自 evaluate.py。
 
 用法：
-    python app.py                                  # 读取 final_runs.txt 中的最终模型
+    python app.py                                  # 读取 runs/final_runs.txt 中的最终模型
     python app.py --runs runs/A1_s0 runs/A2_s0     # 指定模型（多个即集成）
 """
 
@@ -316,9 +316,9 @@ DEVICE = get_device()
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="人脸表情识别演示")
     parser.add_argument("--runs", type=Path, nargs="+", default=None,
-                        help="模型目录；缺省时读取 final_runs.txt")
+                        help="模型目录；缺省时读取 runs/final_runs.txt")
     parser.add_argument("--single", action="store_true",
-                   help="使用 best_single.txt 里的最佳单模型（缺省用 final_runs.txt 的多模型平均）")
+                   help="使用 runs/best_single.txt 里的最佳单模型（缺省用 runs/final_runs.txt 的多模型平均）")
     parser.add_argument("--share", action="store_true", help="生成临时公网链接")
     parser.add_argument("--inbrowser", action="store_true", help="启动后自动打开浏览器")
     args = parser.parse_args()
