@@ -98,12 +98,17 @@ def load_model(ckpt_path: str | Path, device: torch.device) -> tuple[torch.nn.Mo
 
 
 FINAL_RUNS_FILE = Path(__file__).resolve().parent / "final_runs.txt"
+BEST_SINGLE_FILE = Path(__file__).resolve().parent / "best_single.txt"
 
 
-def final_runs() -> list[Path]:
-    """读取 final_runs.txt 中记录的最终模型目录（按 PublicTest 选定，每行一个，# 开头为注释）。"""
-    lines = FINAL_RUNS_FILE.read_text(encoding="utf-8").splitlines()
-    return [FINAL_RUNS_FILE.parent / ln.strip() for ln in lines if ln.strip() and not ln.startswith("#")]
+def final_runs(single: bool = False) -> list[Path]:
+    """读取最终模型目录（都按 PublicTest 选定，每行一个，# 开头为注释）。
+
+    single=False 读 final_runs.txt（多模型概率平均）；single=True 读 best_single.txt（最佳单模型）。
+    """
+    path = BEST_SINGLE_FILE if single else FINAL_RUNS_FILE
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return [path.parent / ln.strip() for ln in lines if ln.strip() and not ln.startswith("#")]
 
 
 def load_runs(runs: list[Path], device: torch.device) -> list[tuple[torch.nn.Module, bool, dict]]:

@@ -317,10 +317,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="人脸表情识别演示")
     parser.add_argument("--runs", type=Path, nargs="+", default=None,
                         help="模型目录；缺省时读取 final_runs.txt")
+    parser.add_argument("--single", action="store_true",
+                   help="使用 best_single.txt 里的最佳单模型（缺省用 final_runs.txt 的多模型平均）")
     parser.add_argument("--share", action="store_true", help="生成临时公网链接")
     parser.add_argument("--inbrowser", action="store_true", help="启动后自动打开浏览器")
     args = parser.parse_args()
-    args.runs = args.runs or final_runs()
+    args.runs = args.runs or final_runs(single=args.single)
     torch.set_grad_enabled(False)
     print(f"推理设备: {DEVICE}")
     try:

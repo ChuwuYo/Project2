@@ -110,3 +110,15 @@ def test_app_matches_evaluate():
     x_app = torch.cat([dataset.preprocess_face(f) for f in faces]).to(app.DEVICE)
     p_app = app.model_probs(model, x_app, tta).cpu()
     assert torch.allclose(p_app, p_eval, atol=1e-5)
+
+
+def test_best_single_and_final_runs_exist():
+    """脚本选项 1/2 读取的模型目录都存在，且最佳单模型是一个目录。"""
+    import pytest
+
+    from utils import final_runs
+    single = final_runs(single=True)
+    if not (single[0] / "best.pt").exists():
+        pytest.skip("没有模型文件（例如在只上传代码的 Colab 上）")
+    assert len(single) == 1 and (single[0] / "best.pt").exists()
+    assert all((r / "best.pt").exists() for r in final_runs())

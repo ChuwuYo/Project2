@@ -22,7 +22,7 @@
 | PublicTest | 3,589 | 早停、选 checkpoint、比较实验、决定 TTA、选集成方案 | `train.py`、`evaluate.py --split PublicTest` |
 | PrivateTest | 3,589 | 只做最终评估 | 只有 `evaluate.py` 会读取 |
 
-`tests/test_pipeline.py`（8 项）会自动检查：训练过程从不读取 PrivateTest，且除 `evaluate.py`、`dataset.py`、`check_data.py`、`app.py` 外没有源码出现 PrivateTest。
+`tests/test_pipeline.py`（9 项）会自动检查：训练过程从不读取 PrivateTest，且除 `evaluate.py`、`dataset.py`、`check_data.py`、`app.py` 外没有源码出现 PrivateTest。
 
 ## 实验（消融，每组只比上一组多一个改动）
 
@@ -54,7 +54,8 @@ train.py          训练（A0–A3），断点续训
 evaluate.py       评估；唯一读取 PrivateTest 的脚本；支持多模型集成
 check_data.py     数据检查
 app.py            Gradio 网页演示（实时摄像头 / 上传拍照）
-final_runs.txt    最终模型列表（evaluate.py 和 app.py 默认读取）
+final_runs.txt    最终模型列表（多模型平均；evaluate.py 和 app.py 默认读取）
+best_single.txt   最佳单模型（A1_s2；evaluate.py / app.py 加 --single 时读取）
 runs/             每次训练的权重、日志、曲线（压缩包只保留最终 6 个模型的 best.pt）
 reports/          数据检查、方案选择、PrivateTest 报告
 tests/            自动测试
@@ -66,8 +67,8 @@ scripts/          Windows 一键脚本：verify_test.bat（复核准确率）、
 ## 使用（Windows）
 
 1. 把数据文件 `icml_face_data.csv`（或 `fer2013.csv`）放进 `data/`（压缩包不含数据）。
-2. 双击 `scripts\verify_test.bat`：用交付的 6 个模型在 PrivateTest 上复核准确率，应输出 0.7311。
-3. 双击 `scripts\start_demo.bat`：启动网页演示并自动打开浏览器。
+2. 双击 `scripts\verify_test.bat`，输 1（多模型平均）：用交付的 6 个模型在 PrivateTest 上复核准确率，应输出 0.7311；输 2（最佳单模型 A1_s2）应输出 0.7111。
+3. 双击 `scripts\start_demo.bat`：同样先选 1 或 2，然后启动网页演示并自动打开浏览器。
 4. 想自己重新训练一个模型：双击 `scripts\train.bat`（默认 A1、种子 0，结果在 `runs_local\A1_s0\`；中断后再双击会接着训练）。详细步骤、怎么看结果见 `docs/训练过程说明.md` 第 7 节。
 
 首次运行会自动创建 `.venv` 并安装依赖；检测到 NVIDIA 显卡时自动安装 GPU 版 PyTorch，没有显卡也能用 CPU 运行（评估和演示可以，训练会非常慢）。第一次读取数据会解析 CSV 并生成缓存 `data/fer2013.npz`（约 1 分钟），之后约 1 秒。
@@ -79,11 +80,12 @@ pip install -r requirements.txt
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 python check_data.py                                        # 数据检查
 python evaluate.py                                          # 复核最终结果：final_runs.txt 中的 6 个模型，PrivateTest
+python evaluate.py --single                                 # 最佳单模型 best_single.txt（A1_s2），PrivateTest
 python train.py --exp A1 --seed 0 --out runs_local          # 自己训练一个模型（中断后加 --resume）
 python evaluate.py --runs runs_local/A1_s0 --split PublicTest   # 在验证集上看自己训练的模型
 python app.py                                               # 网页演示（最终模型）
 python app.py --runs runs_local/A1_s0                       # 网页演示（自己训练的模型）
-pytest tests                                                # 自动测试（8 项）
+pytest tests                                                # 自动测试（9 项）
 ```
 
 `runs/` 里是交付的最终模型，自己训练请始终加 `--out runs_local`。即使忘了加，`train.py` 发现目录里已有模型（`best.pt`）也会报错停下，不会覆盖；`evaluate.py` 也不会用另一组模型的结果覆盖 `reports/` 里的最终 PrivateTest 报告。

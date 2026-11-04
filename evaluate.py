@@ -30,10 +30,12 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="FER2013 模型评估")
     p.add_argument("--runs", type=Path, nargs="+", default=None,
                    help="一个或多个训练输出目录；缺省时读取 final_runs.txt")
+    p.add_argument("--single", action="store_true",
+                   help="使用 best_single.txt 里的最佳单模型（缺省用 final_runs.txt 的多模型平均）")
     p.add_argument("--split", choices=["PublicTest", "PrivateTest"], default="PrivateTest")
     p.add_argument("--out", type=Path, default=Path("reports"))
     args = p.parse_args()
-    args.runs = args.runs or final_runs()
+    args.runs = args.runs or final_runs(single=args.single)
     return args
 
 
