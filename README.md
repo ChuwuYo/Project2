@@ -1,15 +1,16 @@
 # FER2013 人脸表情识别
 
-用 PyTorch 从头训练的 7 类人脸表情识别（愤怒 / 厌恶 / 恐惧 / 快乐 / 悲伤 / 惊讶 / 中性）。模型是针对 48×48 灰度图改造的 ResNet18，最终用 6 个模型的概率平均集成。
+用 PyTorch 从头训练的 7 类人脸表情识别（愤怒 / 厌恶 / 恐惧 / 快乐 / 悲伤 / 惊讶 / 中性）。模型是针对 48×48 灰度图改造的 ResNet18，最终用 9 个模型（A1、A2、A5 各 3 个种子）的概率平均集成。
 
 ## 最终结果
 
 | 项目 | 数值 |
 |---|---|
-| 最终方案 | A1 与 A2 各 3 个随机种子，共 6 个 ResNet18，概率平均集成 |
-| **PrivateTest 准确率** | **73.11%**（3589 张） |
-| PublicTest 准确率（用于选方案） | 71.52% |
-| 最佳单模型（PublicTest） | 70.30%（A1_s2） |
+| 最终方案 | A1、A2、A5 各 3 个随机种子，共 9 个 ResNet18，概率平均集成 |
+| **PrivateTest 准确率** | **73.50%**（3589 张） |
+| PublicTest 准确率（用于选方案） | 71.69% |
+| 最佳单模型（PublicTest） | 71.05%（hp_bs64/A1_s0：A1 配置 + batch 64；PrivateTest 71.97%） |
+| 上一版最终方案（6 个模型，A1+A2） | PublicTest 71.52%，PrivateTest 73.11%（报告保留在 `reports/PrivateTest_ensemble6/`） |
 
 - PrivateTest 只在最终方案确定后评估，报告在 `reports/PrivateTest_ensemble6/`（准确率、各类 precision/recall/F1、混淆矩阵）。
 - 所有选择（配置、种子、集成方式、是否翻转 TTA）只用 PublicTest，过程见 `reports/model_selection.md`。
@@ -32,10 +33,13 @@
 | A1 | + 随机翻转、旋转、平移、缩放 | 69.19% ± 0.52（3 个种子；TTA 70.08% ± 0.23） | 提升约 10.3 个百分点，最明显的改进 |
 | A2 | + 标签平滑 0.1 | 69.26% ± 0.46（3 个种子；TTA 69.50% ± 0.81） | 与 A1 的差距在种子波动范围内，不能说明更好 |
 | A3 | + Dropout 0.4 + RandomErasing | 68.83% ± 0.31（3 个种子；TTA 69.56% ± 0.21） | 未见稳定提升，略低于 A1/A2（差距在波动范围内） |
+| A5 | A1 + 类别加权损失（权重 = 总数 / (7 × 该类数量)） | 68.88% ± 0.30（3 个种子；TTA 69.44% ± 0.55） | 低于 A1（70.08%），没有帮助；准确率上看不出改善少数类 |
+| V1 | A1 的增强，模型换成 VGG 风格 CNN（8 个卷积层，无残差） | 68.71% ± 0.58（3 个种子；TTA 69.10% ± 0.31） | 比 ResNet18（A1）低约 1 个百分点 |
 
 - 结论只依据多次实验：A0→A1 的差距远大于种子间波动（标准差约 0.3–0.6%）；A1 与 A2 无显著差别，因此两者一起做集成。
 - 水平翻转 TTA 在 12 个模型中的 10 个上提高了 PublicTest 准确率，是否启用由每个模型各自在 PublicTest 上决定。
-- 集成：A1×3 为 71.50%，A2×3 为 70.63%，A1+A2×6 为 71.52%（均为 PublicTest），按预先约定的规则取最高者。
+- 集成（均为 PublicTest）：A1×3 为 71.50%，A2×3 为 70.63%，A1+A2×6 为 71.52%，A5×3 为 70.94%，A1+A2+A5×9 为 71.69%。按预先约定的规则（集成超过 71.52% 才换），最终方案换成 9 模型集成；但它只比 6 模型多对 6 张图，属于很小的差别。
+- 超参数（只做 A1 种子 0，每项 1 次，不做均值）：lr 0.005 为 68.60%；lr 0.02 最佳轮 69.71%（不带 TTA，权重丢失，见局限）；batch 64 为 71.05%；batch 256 为 68.40%；基准 A1_s0（lr 0.01，batch 128）为 70.08%。batch 64 最好，但只有 1 个种子，差距（+0.97）可能有一部分是随机波动。
 - 每次训练的 loss / accuracy 记录在 `runs/<实验>_s<种子>/log.csv`，曲线在同目录 `curves.png`。
 
 训练设置：SGD（momentum 0.9，Nesterov，lr 0.01，weight decay 5e-4），batch 128，ReduceLROnPlateau（按 PublicTest 准确率，减半，patience 5），PublicTest 连续 20 轮不提升即早停，最多 100 轮，GPU 上混合精度。训练在 Colab T4 上完成，每轮约 26 秒；具体怎么训练、怎么用 Colab、怎么复现见 `docs/训练过程说明.md`。
@@ -50,13 +54,13 @@
 dataset.py        数据读取（CSV→缓存）、划分、预处理与增强（训练/评估/前端共用）
 model.py          改造的 ResNet18
 utils.py          随机种子、DataLoader、推理（含翻转 TTA）、模型加载、画图
-train.py          训练（A0–A3），断点续训
+train.py          训练（A0–A3、A5、V1），断点续训
 evaluate.py       评估；唯一读取 PrivateTest 的脚本；支持多模型集成
 check_data.py     数据检查
 app.py            Gradio 网页演示（实时摄像头 / 上传拍照）
-runs/final_runs.txt    最终模型列表（多模型平均；evaluate.py 和 app.py 默认读取）
-runs/best_single.txt   最佳单模型（A1_s2；evaluate.py / app.py 加 --single 时读取）
-runs/             每次训练的权重、日志、曲线（压缩包只保留最终 6 个模型的 best.pt）
+runs/final_runs.txt    最终模型列表（9 个，多模型平均；evaluate.py 和 app.py 默认读取）
+runs/best_single.txt   最佳单模型（hp_bs64/A1_s0；evaluate.py / app.py 加 --single 时读取）
+runs/             每次训练的权重、日志、曲线（压缩包不带 A0、A3、V1、其余 hp 实验的权重；最终 9 个模型和最佳单模型的 best.pt 在各自的交付包里）
 reports/          数据检查、方案选择、PrivateTest 报告
 tests/            自动测试
 assets/           YuNet 人脸检测模型（演示用）
@@ -67,7 +71,7 @@ scripts/          Windows 一键脚本：verify_test.bat（复核准确率）、
 ## 使用（Windows）
 
 1. 把数据文件 `icml_face_data.csv`（或 `fer2013.csv`）放进 `data/`（压缩包不含数据）。
-2. 双击 `scripts\verify_test.bat`，输 1（多模型平均）：用交付的 6 个模型在 PrivateTest 上复核准确率，应输出 0.7311；输 2（最佳单模型 A1_s2）应输出 0.7111。
+2. 双击 `scripts\verify_test.bat`，输 1（多模型平均）：用交付的 9 个模型在 PrivateTest 上复核准确率，应输出 0.7350；输 2（最佳单模型 hp_bs64/A1_s0）应输出 0.7197。
 3. 双击 `scripts\start_demo.bat`：同样先选 1 或 2，然后启动网页演示并自动打开浏览器。
 4. 想自己重新训练一个模型：双击 `scripts\train.bat`（默认 A1、种子 0，结果在 `runs_local\A1_s0\`；中断后再双击会接着训练）。详细步骤、怎么看结果见 `docs/训练过程说明.md` 第 7 节。
 
@@ -79,8 +83,8 @@ pip install -r requirements.txt
 # 有 NVIDIA 显卡时改装 GPU 版 PyTorch：
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 python check_data.py                                        # 数据检查
-python evaluate.py                                          # 复核最终结果：runs/final_runs.txt 中的 6 个模型，PrivateTest
-python evaluate.py --single                                 # 最佳单模型 runs/best_single.txt（A1_s2），PrivateTest
+python evaluate.py                                          # 复核最终结果：runs/final_runs.txt 中的 9 个模型，PrivateTest
+python evaluate.py --single                                 # 最佳单模型 runs/best_single.txt（hp_bs64/A1_s0），PrivateTest
 python train.py --exp A1 --seed 0 --out runs_local          # 自己训练一个模型（中断后加 --resume）
 python evaluate.py --runs runs_local/A1_s0 --split PublicTest   # 在验证集上看自己训练的模型
 python app.py                                               # 网页演示（最终模型）
@@ -95,13 +99,14 @@ pytest tests                                                # 自动测试（9 �
 - “实时摄像头”：每帧检测人脸、画框并标出表情（可同时多张脸）。
 - “上传 / 拍照”：上传、粘贴或拍照后点“识别表情”，显示 7 类概率和模型实际看到的 48×48 人脸。
 - 人脸检测用 OpenCV 自带的 YuNet，按双眼转正后裁剪。演示只用于展示，不参与任何评估。
-- 模型只在 FER2013 上训练，73.11% 是该测试集上的准确率；真实摄像头的光线、角度和人脸风格不同，表情夸张一些更容易识别对。
+- 模型只在 FER2013 上训练，73.50% 是该测试集上的准确率；真实摄像头的光线、角度和人脸风格不同，表情夸张一些更容易识别对。
 
 ## 局限
 
 - A3 有两个种子在 100 轮上限附近才达到最佳（第 92、81 轮），可能没完全收敛。
-- 没有系统地比较学习率、批次大小和其他网络结构。
-- 厌恶（Disgust）训练样本只有 436 张，恐惧（Fear）的召回率最低（50.6%），与悲伤、愤怒容易混淆（见混淆矩阵）。
+- 学习率、批次大小每项只试了 1 个种子；hp_lr0.02 续训时旧 VM 上的 best.pt 丢了，只有 log.csv 里的 69.71%（无 TTA），没有权重和 TTA 结果。
+- 类别加权（A5）和 VGG（V1）已试，没有超过 A1 单模型，A5 加入集成后 PublicTest 从 71.52% 到 71.69%（只多对 6 张图）。
+- 厌恶（Disgust）训练样本只有 436 张，恐惧（Fear）的召回率最低（51.1%），与悲伤、愤怒容易混淆（见混淆矩阵）。
 
 ## 参考与致谢
 
