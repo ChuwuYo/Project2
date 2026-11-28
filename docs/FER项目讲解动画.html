@@ -23,7 +23,7 @@
   --mono:"JetBrains Mono","Cascadia Code",Consolas,monospace;
 }
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
-.app{display:grid;grid-template-columns:1fr 360px;grid-template-rows:56px 1fr 52px;height:100vh}
+.app{display:grid;grid-template-columns:1fr 400px;grid-template-rows:56px 1fr 52px;height:100vh}
 .app.no-notes{grid-template-columns:1fr 0}
 header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--line)}
 header .mark{color:var(--clay);font-size:22px}
@@ -40,6 +40,8 @@ aside code{word-break:break-all;font-family:var(--mono);font-size:12.5px;backgro
 aside details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
 aside summary{cursor:pointer;font-size:14px;font-weight:600}
 aside details p{margin-top:6px;color:var(--ink2);font-size:14px}
+aside .plain{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--clay);border-radius:10px;padding:10px 12px;margin-top:6px}
+aside .plain li{margin:4px 0;font-size:13.8px;line-height:1.6}
 footer{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 24px;border-top:1px solid var(--line)}
 footer button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;height:32px;min-width:36px;padding:0 10px;font:inherit;font-size:14px;cursor:pointer}
 footer button:hover{border-color:var(--clay)}
@@ -82,7 +84,7 @@ svg text{font-family:var(--sans)}
   <section class="scene" id="s0" aria-label="封面">
     <div class="abs" style="left:0;right:0;top:120px;text-align:center">
       <div class="t-hero" data-a="title">让电脑看懂 7 种表情</div>
-      <div class="t-sub" style="margin-top:14px" data-a="sub">FER2013 · 48×48 灰度人脸 · PyTorch 从头训练 ResNet18</div>
+      <div class="t-sub" style="margin-top:14px" data-a="sub">FER2013 · 48×48 灰度人脸 · PyTorch 从头训练 ResNet18 · 9 模型集成</div>
     </div>
     <div class="abs" id="faces0" style="left:0;right:0;top:300px;display:flex;justify-content:center;gap:22px"></div>
     <div class="abs" style="left:0;right:0;top:500px;text-align:center" data-a="score">
@@ -168,7 +170,7 @@ svg text{font-family:var(--sans)}
     <div class="abs t-title" style="left:60px;top:40px">每次只加一个改动，每组 3 个随机种子</div>
     <svg class="abs" style="left:40px;top:110px" width="1200" height="480" id="chart6"></svg>
     <div class="abs card" style="left:60px;top:600px;width:1160px;padding:16px 20px" data-a="concl">
-      <span style="font-weight:600">结论：</span><span class="lbl">数据增强提升约 <b class="clay">10 个百分点</b>，远大于种子间波动；标签平滑、Dropout+RandomErasing 的差别都在波动范围内，<b>不能说更好</b>。</span>
+      <span style="font-weight:600">结论：</span><span class="lbl">数据增强提升约 <b class="clay">10.3 个百分点</b>，最显著；标签平滑、Dropout 擦除、类别加权均在波动内；ResNet18 高于 VGG 约 1 个点；超参数试了 lr/batch，batch 64 单次达 71.05%。</span>
     </div>
   </section>
 
@@ -180,8 +182,8 @@ svg text{font-family:var(--sans)}
     <svg class="abs" style="left:40px;top:300px" width="760" height="300" id="sel7"></svg>
     <div class="abs card" style="left:840px;top:330px;width:380px;padding:22px;text-align:center" data-a="final">
       <div class="lbl">方案定死后，PrivateTest 只跑一次</div>
-      <div class="num clay" style="font-size:70px;font-weight:600">73.11%</div>
-      <div class="lbl">evaluate.py · 3589 张</div>
+      <div class="num clay" style="font-size:70px;font-weight:600">73.50%</div>
+      <div class="lbl">evaluate.py · 3589 张（最佳单模型 71.97%）</div>
     </div>
   </section>
 
@@ -206,7 +208,7 @@ svg text{font-family:var(--sans)}
       <div class="lbl" style="margin-top:6px">模型真正看到的 48×48</div>
     </div>
     <div class="abs" style="left:860px;top:340px;width:360px" id="prob9"></div>
-    <div class="abs lbl" style="left:60px;top:470px;width:760px;line-height:1.8" data-a="note9">为什么一定要缩成 48×48 灰度？模型只在这种图上学过，直接喂高清图等于换了一种数据，准确率反而下降。所以前端和评估用的是<b class="clay">同一套预处理、同一组 6 个模型</b>。</div>
+    <div class="abs lbl" style="left:60px;top:470px;width:760px;line-height:1.8" data-a="note9">为什么一定要缩成 48×48 灰度？模型只在这种图上学过，直接喂高清图等于换了一种数据，准确率反而下降。所以前端和评估用的是<b class="clay">同一套预处理、同一组 9 个模型</b>。</div>
   </section>
 
   <!-- 10 规则与自查 -->
@@ -214,7 +216,7 @@ svg text{font-family:var(--sans)}
     <div class="abs t-title" style="left:60px;top:40px">三份数据，三种用途，绝不混用</div>
     <div class="abs" style="left:60px;top:120px;display:flex;gap:24px" id="rule10"></div>
     <div class="abs card" style="left:60px;top:340px;width:1160px;padding:20px 24px" data-a="tests">
-      <div style="font-weight:600;margin-bottom:8px">自动测试保证（pytest，8 项全部通过）</div>
+      <div style="font-weight:600;margin-bottom:8px">自动测试保证（pytest，9 项全部通过）</div>
       <div class="lbl" style="line-height:1.9" id="tests10"></div>
     </div>
   </section>
@@ -253,47 +255,293 @@ const IMG = ["iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAAAAAByaaZbAAAImUlEQVRIDS3BCViUZR
 const CURVES = {"A0_s0": [[32.0, 33.5], [48.5, 48.2], [57.0, 49.2], [64.6, 36.6], [71.8, 44.0], [79.1, 48.3], [86.0, 44.8], [90.7, 51.0], [93.4, 51.2], [95.2, 49.7], [96.5, 50.7], [97.5, 54.6], [98.6, 56.0], [99.3, 56.6], [99.7, 58.2], [99.7, 57.8], [99.7, 58.6], [99.7, 57.6], [99.7, 58.1], [99.7, 58.1], [99.7, 58.2], [99.8, 58.6], [99.7, 58.1], [99.8, 58.3], [99.8, 58.5], [99.8, 58.5], [99.8, 58.0], [99.8, 58.3], [99.8, 58.3], [99.8, 58.2], [99.8, 58.1], [99.8, 58.1], [99.8, 58.1], [99.8, 58.2], [99.8, 58.1], [99.8, 58.0], [99.8, 58.2]], "A1_s0": [[26.4, 23.2], [41.4, 44.2], [48.7, 39.8], [52.3, 49.6], [55.0, 51.5], [56.7, 56.1], [57.9, 55.2], [59.4, 56.4], [60.4, 58.2], [61.5, 53.9], [61.8, 54.5], [62.8, 59.7], [63.6, 60.2], [63.8, 58.0], [64.4, 62.2], [65.2, 56.1], [65.5, 58.9], [66.2, 56.9], [66.8, 61.7], [67.0, 62.6], [67.6, 60.1], [67.8, 61.8], [68.7, 62.5], [69.3, 65.2], [69.3, 64.3], [69.6, 63.0], [70.1, 61.6], [70.2, 62.2], [70.8, 63.9], [71.5, 62.8], [74.3, 67.2], [75.0, 67.2], [75.3, 64.8], [75.8, 60.9], [75.7, 66.0], [76.4, 66.5], [76.5, 65.7], [76.8, 61.6], [79.1, 67.8], [80.1, 67.8], [80.4, 68.0], [80.9, 68.0], [81.1, 67.0], [81.3, 67.2], [81.4, 66.9], [82.1, 65.2], [82.0, 67.9], [84.1, 68.1], [85.2, 68.1], [85.3, 69.2], [85.3, 67.4], [85.3, 68.6], [85.8, 67.3], [86.0, 67.6], [86.4, 67.5], [86.6, 67.1], [87.7, 67.9], [88.2, 68.1], [88.3, 67.6], [88.4, 67.8], [88.6, 68.0], [88.6, 67.6], [89.7, 68.4], [89.7, 68.3], [89.8, 68.8], [89.8, 68.3], [90.4, 68.4], [90.0, 68.3], [90.6, 68.7], [90.7, 68.6]]};            // A0_s0 / A1_s0 每轮 [train_acc, val_acc]（%）
 const CLS = ["愤怒 Angry","厌恶 Disgust","恐惧 Fear","快乐 Happy","悲伤 Sad","惊讶 Surprise","中性 Neutral"];
 const TRAIN_COUNT = [3995,436,4097,7215,4830,3171,4965];
-const RECALL = [65.78,70.91,50.57,91.47,62.12,83.89,75.56];  // PrivateTest 各类召回率
+const RECALL = [66.80,72.73,51.14,91.24,61.62,83.41,77.48];  // PrivateTest 各类召回率（9 模型集成）
 const ABL = [ // PublicTest，3 个种子 均值 ± 标准差（不加 TTA）
   {k:"A0",d:"无增强",m:58.87,s:0.61},{k:"A1",d:"+ 数据增强",m:69.19,s:0.52},
-  {k:"A2",d:"+ 标签平滑 0.1",m:69.26,s:0.46},{k:"A3",d:"+ Dropout + Erasing",m:68.83,s:0.31}];
-const SEL = [["最佳单模型",70.30],["A1 × 3",71.50],["A2 × 3",70.63],["A1+A2 × 6",71.52]];
+  {k:"A2",d:"+ 标签平滑",m:69.26,s:0.46},{k:"A3",d:"+ Dropout擦除",m:68.83,s:0.31},
+  {k:"A5",d:"+ 类别加权",m:68.88,s:0.30},{k:"V1",d:"VGG 对比",m:68.71,s:0.58}];
+const SEL = [["最佳单模型(bs64)",71.05],["A1 × 3",71.50],["A1+A2 × 6",71.52],["A1+A2+A5 × 9",71.69]];
 
 // ===== 讲稿：每章 怎么讲 / 代码在哪 / 可能被问 =====
 const NOTES = [
- {t:"项目概览", say:"我们做的是人脸表情识别：输入一张 48×48 的灰度人脸，输出 7 种表情之一。模型是改造过的 ResNet18，用 PyTorch 从头训练；最终 6 个模型集成，在 PrivateTest 上准确率 73.11%。",
-  code:["<code>README.md</code>：整体说明和复现命令","<code>final_runs.txt</code>：最终用的 6 个模型"],
-  qa:[["这是人脸识别吗？","不是。人脸识别是认出“是谁”，我们做的是判断“什么表情”。"],["73.11% 怎么来的？","方案在 PublicTest 上选定之后，用 evaluate.py 在 PrivateTest 上只跑了一次。"]]},
- {t:"数据：CSV 怎么变成图片", say:"CSV 每一行是一张脸：emotion 是 0–6 的标签，Usage 说明属于哪个子集，pixels 是 2304 个数字，正好是 48×48，reshape 一下就是图。三份数据 28709 / 3589 / 3589，官方划分不改。类别不平衡：厌恶只有 436 张。",
-  code:["<code>dataset.py</code> → <code>_parse_csv</code>：逐行解析并检查 2304 个像素","<code>dataset.py</code> → <code>load_split</code>：唯一的取数入口，第一次解析后缓存成 npz","<code>check_data.py</code>：数据审计，结果在 <code>reports/data_check/</code>"],
-  qa:[["数据检查做了什么？","检查三个子集数量、标签范围 0–6、尺寸 48×48、均值方差，找出 13 张空白图和跨子集重复图。"],["类别不平衡怎么处理？","我们如实报告了每类的召回率；厌恶样本最少，但准确率不算最低，最难的是恐惧。"]]},
- {t:"预处理与数据增强", say:"像素先除以 255 变成 0–1，再减均值 0.5077、除标准差 0.2550。均值和标准差只用训练集算，避免偷看测试集。训练时再做随机翻转、旋转 ±10°、平移 10%、缩放 0.9–1.1，验证、测试、前端都不做增强。预处理只写在一个函数里，三处共用。",
-  code:["<code>dataset.py</code> → <code>build_transform(train)</code>：train=True 加增强，False 只标准化","<code>dataset.py</code> → <code>MEAN / STD</code>","<code>tests/test_pipeline.py</code>：检查前端与评估的预处理完全相同"],
-  qa:[["为什么要标准化？","让输入大致在 0 附近、尺度统一，训练更稳定、收敛更快。"],["为什么测试时不做增强？","测试要评估真实表现，随机变换会让结果不稳定；翻转 TTA 是另一回事，是固定的两次预测取平均。"]]},
- {t:"模型结构", say:"用的是 ResNet18，不用预训练权重。改了三处：第一层卷积改成单通道、3×3、步长 1；去掉 maxpool；最后加 Dropout 再接 7 类全连接。特征图 48 → 24 → 12 → 6，再全局平均池化得到 512 维。残差连接让输出等于 F(x) + x，深层网络也好训练。",
-  code:["<code>model.py</code> → <code>build_model</code>：全部改动就这几行"],
-  qa:[["为什么不用预训练？","ImageNet 是 224×224 彩色自然图，和 48×48 灰度人脸差别大；从头训练也能超过 70%，结构也更好解释。"],["残差连接有什么用？","梯度可以直接沿着 +x 那条路往回传，缓解深层网络梯度消失、退化的问题。"],["参数量大约多少？","约 1100 万（ResNet18 量级）。"]]},
- {t:"训练过程与损失函数", say:"每次取 128 张图，前向得到 7 个分数，softmax 变成概率，用交叉熵算 loss，反向传播求梯度，SGD 更新参数。学习率 0.01，PublicTest 准确率 5 轮不升就减半，20 轮不升就早停，最多 100 轮。GPU 上用混合精度加速。每轮把 loss 和准确率记到 log.csv。",
-  code:["<code>train.py</code> → <code>train_one_epoch</code> / <code>validate</code>","<code>train.py</code> → <code>main</code>：优化器、调度器、早停、保存 best.pt / last.pt","<code>runs/*/log.csv</code>、<code>curves.png</code>：训练记录"],
-  qa:[["交叉熵为什么适合分类？","它直接惩罚“正确类概率低”，概率越接近 1 损失越接近 0，和准确率目标一致。"],["标签平滑是什么？","把正确类的目标从 1 改成 0.9 左右，其余类分一点，防止模型过度自信（A2 实验）。"],["best.pt 按什么选？","按 PublicTest 准确率最高的那一轮，不看 PrivateTest。"]]},
- {t:"过拟合与数据增强", say:"这是真实训练曲线。不加增强的 A0，训练集准确率冲到 99.8%，验证集停在 58% 左右，差距巨大，就是过拟合，在背答案。加了增强的 A1，训练集更难，曲线涨得慢，但验证集到了 68–69%。",
-  code:["<code>runs/A0_s0/log.csv</code>、<code>runs/A1_s0/log.csv</code>","<code>utils.py</code> → <code>plot_curves</code>：画曲线"],
-  qa:[["怎么判断过拟合？","训练集准确率远高于验证集，而且验证集不再上升甚至下降。"],["除了增强还有什么防过拟合？","weight decay 5e-4、Dropout、早停。"],["为什么 A1 的训练准确率反而低？","它是在随机变换后的图上算的，题目变难了，这正是增强在起作用。"]]},
- {t:"消融实验与结论", say:"消融实验每组只比上一组多一个改动。每组跑 3 个随机种子，报告均值和标准差。数据增强从 58.87% 提到 69.19%，提升约 10 个百分点，远大于约 0.3–0.6 的标准差；标签平滑和 Dropout+RandomErasing 的差别都在波动范围内，所以不能说它们更好。",
-  code:["<code>train.py</code> → <code>EXPERIMENTS</code>：A0–A3 的定义","<code>reports/model_selection.md</code>：所有模型的 PublicTest 结果"],
-  qa:[["为什么要跑 3 个种子？","单次结果有随机波动，项目要求结论要有充分实验支撑，不能凭单次结果说某方法更好。"],["A2 比 A1 高 0.07，算提升吗？","不算，差距比标准差小得多，属于随机波动。"]]},
- {t:"集成与翻转 TTA", say:"翻转 TTA：同一张图原图和水平翻转各预测一次，概率取平均；每个模型用不用由它自己在 PublicTest 上决定。集成：6 个模型的概率再取平均，不同模型犯的错不完全一样，平均后互相抵消。在 PublicTest 上比较四种方案，六模型最高 71.52%，选它；然后才在 PrivateTest 上跑一次，得到 73.11%。",
-  code:["<code>utils.py</code> → <code>predict_probs</code> / <code>model_probs</code>：TTA 与集成，评估和前端共用","<code>evaluate.py</code>：唯一读取 PrivateTest 的脚本","<code>reports/PrivateTest_ensemble6/</code>：最终结果"],
-  qa:[["为什么 PrivateTest 比 PublicTest 还高？","两个子集图片不同，有随机差异；我们没有在 PrivateTest 上做任何选择，所以这是真实的一次性结果。"],["A1×3 和六模型只差 1 张图，为什么选六模型？","事先约定按 PublicTest 最高者选，不事后改规则。"]]},
- {t:"结果分析", say:"快乐和惊讶最好认，召回率 91% 和 84%；恐惧最难，只有 51%。看混淆矩阵：恐惧有 100 张被认成悲伤、66 张认成愤怒；悲伤有 113 张被认成中性。这些表情本身就很像，48×48 的小图里差别更小。",
-  code:["<code>reports/PrivateTest_ensemble6/classification_report.txt</code>","<code>reports/PrivateTest_ensemble6/confusion_matrix.png</code>"],
-  qa:[["召回率和准确率有什么区别？","召回率是某一类里被认对的比例；准确率是全部图片里认对的比例。"],["怎么改进恐惧类？","可以试类别加权损失、更多数据或更强的模型，但需要再做实验验证。"]]},
- {t:"网页演示", say:"演示网页先用 YuNet 找到人脸，按两只眼睛把脸转正，裁一个 1.2 倍的正方形，再缩成 48×48 灰度图——也就是把任何照片变成 FER2013 的样子。之后的预处理、6 个模型和 TTA 都和评估完全一样。演示只用于展示，不参与任何评估。",
-  code:["<code>app.py</code> → <code>detect_faces</code> / <code>align_crop</code> / <code>predict</code> / <code>detect_live</code>","<code>dataset.py</code> → <code>preprocess_face</code>"],
-  qa:[["为什么预览图这么糊？","显示的就是模型真正看到的 48×48 输入；想用高清图需要换高分辨率数据集重新训练。"],["真实摄像头准确率也是 73% 吗？","不一定。73.11% 是 FER2013 测试集上的结果，真实场景光线、角度不同。"]]},
- {t:"数据用途与自查", say:"Training 只用来训练；PublicTest 用来选模型、选 TTA、选集成方案；PrivateTest 只在一切确定后评估一次。这些规则不靠口头保证，测试代码会自动检查训练过程从不读取 PrivateTest。",
-  code:["<code>tests/test_pipeline.py</code>：8 项测试","<code>docs/训练过程说明.md</code>：训练环境、Colab 用法、复现步骤"],
-  qa:[["怎么证明没有用测试集调参？","训练脚本只读 Training 和 PublicTest，有测试自动检查；PrivateTest 只出现在 evaluate.py 等少数文件里，结果只生成过一次。"],["怎么复现？","复核准确率：python evaluate.py（或双击 verify_test.bat）得到 73.11%。重新训练：python train.py --exp A1 --seed 0 --out runs_local，参数都在每个模型目录的 config.json；GPU 有少量随机性，重训约有 ±0.5% 差别。"]]},
+ {
+  "t": "项目概览",
+  "plain": [
+   "<b>任务定位</b>：这不是刷脸认“你是谁”（人脸识别），而是看图猜“你现在什么心情”（<b>表情分类</b>，共 7 类）。",
+   "<b>从头训练 ResNet18</b>：不借用别人现成的大模型权重，而是用 PyTorch 把一个 18 层神经网络从零开始教到会认表情（模型写在 <code>model.py</code>）。",
+   "<b>9 模型集成 = 9 个学霸投票</b>：把 9 个独立训练的模型给出的概率取平均（配置写在 <code>runs/final_runs.txt</code>），最终在高考真题 <b>PrivateTest</b> 上考出 <b>73.50%</b>。"
+  ],
+  "say": "我做的是 7 类人脸表情识别：输入一张 48×48 灰度人脸，用 PyTorch 从头训练改造后的 ResNet18。所有调参和选方案只看验证集 PublicTest，最后用 9 个模型（A1、A2、A5 各 3 个种子）做概率平均集成，在测试集 PrivateTest 上只评估一次，准确率 73.50%（最佳单模型 71.97%）。",
+  "code": [
+   "<code>README.md</code>：项目总览、实验汇总表与复现命令",
+   "<code>runs/final_runs.txt</code>：最终 9 模型列表（<code>evaluate.py</code> 与 <code>app.py</code> 默认读取）",
+   "<code>runs/best_single.txt</code>：最佳单模型 <code>hp_bs64/A1_s0</code>（71.97%）"
+  ],
+  "qa": [
+   [
+    "这是人脸识别吗？",
+    "不是。人脸识别是认“这个人是谁”，我们做的是“人脸表情识别（FER）”，属于 7 分类图像分类任务。"
+   ],
+   [
+    "73.50% 怎么来的？",
+    "所有方案都在 PublicTest 上定死后，由 <code>evaluate.py</code> 在 PrivateTest（3589 张）上只跑了一次得出，没有拿测试集调过参。"
+   ]
+  ]
+ },
+ {
+  "t": "数据：CSV 怎么变成图片",
+  "plain": [
+   "<b>CSV 还原成图（<code>reshape</code>）</b>：原始数据是一张表格，每行把 48×48 张黑白照片拉平存成 2304 个数字（0 黑 ~ 255 白）。<code>dataset.py</code> 把这串数折回二维矩阵，就变回照片了。",
+   "<b>npz 缓存</b>：每次读大 CSV 要 1 分钟，<code>dataset.py</code> 第一次读完会打包存成 <code>data/fer2013.npz</code>，之后 1 秒加载。",
+   "<b>三划分（官方固定）</b>：<code>Training</code>（28,709）= 平时刷题库；<code>PublicTest</code>（3,589）= 模拟考；<code>PrivateTest</code>（3,589）= 高考真题（考前封存）。",
+   "<b>类别不平衡</b>：快乐有 7,215 张，厌恶只有 436 张（差 16 倍），所以不能只看总准确率，还要看每类召回率（<code>check_data.py</code> 负责体检）。"
+  ],
+  "say": "数据读取全部收敛在 dataset.py：逐行解析 CSV 的 emotion、Usage 和 2304 个像素并 reshape 成 48×48 灰度图，首次解析后缓存成 npz 提速。我们严格沿用官方三划分（28709 / 3589 / 3589），并用 check_data.py 做了数据检查，发现了类别极不平衡（厌恶仅 436 张）以及少量空白图和跨子集重复图。",
+  "code": [
+   "<code>dataset.py</code> 第 36–58 行（<code>_parse_csv</code>）：解析 CSV 并校验每行 2304 像素",
+   "<code>dataset.py</code> 第 69–89 行（<code>load_all / load_split</code>）：npz 缓存与唯一取数入口",
+   "<code>check_data.py</code>：数据体检脚本，报告输出在 <code>reports/data_check/</code>"
+  ],
+  "qa": [
+   [
+    "数据检查查了什么？",
+    "<code>check_data.py</code> 核对了三个子集数量、标签范围 0–6、图像尺寸 48×48、均值方差，并查出 13 张几乎纯色的空白图和跨子集重复图；为了遵守官方协议，我们保留原划分不做篡改。"
+   ],
+   [
+    "类别不平衡怎么处理？",
+    "我们专门做了 A5 类别加权损失实验，并如实报告了 7 类各自的召回率；虽然厌恶样本最少，但最终召回有 72.7%，最难的其实是恐惧（51.1%）。"
+   ]
+  ]
+ },
+ {
+  "t": "预处理与数据增强",
+  "plain": [
+   "<b>标准化（<code>Normalize</code>）</b>：像素先除以 255 变到 0~1，再减均值 <code>0.5077</code>、除标准差 <code>0.2550</code>，把所有图片的明暗统一到 0 附近，模型学起来更稳。这两个数<b>只用 Training 算</b>，绝不偷看测试集。",
+   "<b>数据增强（<code>augment</code>）</b>：只在平时刷题（训练）时，把同一张脸随机<b>左右镜像（HorizontalFlip）、歪头 ±10°（旋转）、挪动 10%（平移）、缩放 0.9–1.1</b>，逼模型学真正表情而不是背原图。",
+   "<b>三处共用防走样</b>：<code>train.py</code>、<code>evaluate.py</code>、<code>app.py</code> 全部调用 <code>dataset.py</code> 里的同一个 <code>build_transform()</code>，确保训练、测试、网页看到的图标准完全一致。"
+  ],
+  "say": "预处理都在 dataset.py 的 build_transform 里：先除以 255，再用仅从训练集统计的均值 0.5077 和标准差 0.2550 做标准化。只在训练时开启随机水平翻转和仿射变换（旋转、平移、缩放）做数据增强；验证、测试和网页演示全部只做标准化，三处共用同一函数，不会出现不一致。",
+  "code": [
+   "<code>dataset.py</code> 第 32–33 行：<code>MEAN = 0.5077</code>、<code>STD = 0.2550</code>",
+   "<code>dataset.py</code> 第 92–105 行（<code>build_transform</code>）：<code>train=True</code> 加增强，<code>False</code> 只标准化",
+   "<code>dataset.py</code> 第 123–127 行（<code>preprocess_face</code>）：供前端 <code>app.py</code> 复用"
+  ],
+  "qa": [
+   [
+    "为什么要做标准化？",
+    "把输入数值统一缩放到 0 附近、方差接近 1，梯度更新不会忽大忽小，训练更稳、收敛更快。"
+   ],
+   [
+    "为什么验证和测试不做增强？",
+    "验证和测试要客观反映真实水平，随机旋转缩放会让结果每次不一样；而后面用的“翻转 TTA”是确定的原图+镜像取平均，不是随机增强。"
+   ]
+  ]
+ },
+ {
+  "t": "模型结构",
+  "plain": [
+   "<b>ResNet18 是什么</b>：一个 18 层的卷积神经网络（CNN），浅层找边缘线条，中层找眉眼嘴角，深层组合成表情判断。全部代码就在 <code>model.py</code>（只有 19 行）。",
+   "<b>为什么要改三处</b>：原版 ResNet18 是给 224×224 彩色大图用的，一上来用大扫把（<code>7×7/步长2</code>）加暴力压缩（<code>maxpool</code>），会把 48×48 小脸瞬间压成 12×12、细节全糊。我们改成细扫的 <b>1 通道 3×3/步长 1</b>，<b>去掉 maxpool</b>，让尺寸慢慢变小：<b>48 → 24 → 12 → 6</b>。",
+   "<b>残差连接（<code>F(x) + x</code>）</b>：18 层太深，信息传到后面容易衰减；残差就是修一条“直通高架桥（+x）”把输入抄近道加到输出上，反向传播时梯度也能直接传回去。",
+   "<b>Dropout + FC</b>：最后全局平均池化成 512 个数字，加一层 <code>Dropout</code>（训练时随机关掉一部分神经元防偷懒），再接全连接层（<code>Linear</code>）输出 7 类分数。"
+  ],
+  "say": "模型定义在 model.py 里，是基于 PyTorch 的 ResNet18 从头训练，专门针对 48×48 灰度小图改了三处：第一层 conv1 改成单通道 3×3 步长 1；去掉 maxpool 保留空间分辨率，让 4 个残差阶段的特征图依次为 48、24、12、6；最后在全连接层前加了可配置的 Dropout 输出 7 类。残差连接 F(x)+x 让深层网络梯度能顺畅回传。",
+  "code": [
+   "<code>model.py</code> 第 7–18 行（<code>build_model</code>）：全文件就 19 行，第 15–17 行就是全部三处改造"
+  ],
+  "qa": [
+   [
+    "为什么不用预训练权重？",
+    "ImageNet 预训练是 224×224 彩色自然物体，和 48×48 灰度人脸差别很大；而且改造首层后从头训练也能超过 70%，结构更干净、更好解释。"
+   ],
+   [
+    "残差连接有什么用？",
+    "反向传播时梯度可以沿着 +x 这条捷径直接往回传，避免深层网络梯度消失或退化。"
+   ],
+   [
+    "参数量大约多少？",
+    "约 1100 万（标准 ResNet18 量级）。"
+   ]
+  ]
+ },
+ {
+  "t": "训练过程与损失函数",
+  "plain": [
+   "<b>batch 128 与 epoch（一轮）</b>：每次取 128 张图算一次错、改一次参数；把 28,709 张练习题全刷完一遍叫 <b>1 个 epoch</b>（核心循环在 <code>train.py</code>）。",
+   "<b>softmax + 交叉熵（<code>CrossEntropyLoss</code>）</b>：模型先输出 7 个原始分数（logits），<code>softmax</code> 把它们变成百分比概率；<b>交叉熵就是扣分规则</b>——正确类别的概率越低扣分越狠，猜对越接近 1，loss 越接近 0。",
+   "<b>反向传播 + SGD</b>：算完扣分后往回找每个参数该怎么调，用 <b>SGD</b>（带 Nesterov 动量 0.9 和权重衰减 weight decay 5e-4）更新参数。",
+   "<b>学习率衰减 + 早停 + 混合精度</b>：学习率（lr 0.01）是改参数的步子大小；模拟考（PublicTest）连续 5 轮没涨就把步子减半（<code>ReduceLROnPlateau</code>），连续 20 轮没涨就提前交卷（<b>早停</b>）；GPU 上开混合精度（AMP）加速训练。"
+  ],
+  "say": "训练全在 train.py 里完成：每批 128 张图，前向输出 7 类分数，用交叉熵损失 CrossEntropyLoss 算误差，反向传播后用 SGD（lr 0.01、Nesterov 动量 0.9、weight decay 5e-4）更新参数。每轮都在 PublicTest 上验证，连续 5 轮不升就把学习率减半，连续 20 轮不升早停，最多 100 轮，并把每轮指标记录在 log.csv 里。",
+  "code": [
+   "<code>train.py</code> 第 60–92 行：<code>train_one_epoch</code>（单轮训练）与 <code>validate</code>（验证）",
+   "<code>train.py</code> 第 122–128 行：损失函数、SGD 优化器、学习率调度器、混合精度",
+   "<code>train.py</code> 第 145–169 行：训练循环、早停、保存 <code>best.pt</code> 与断点续训 <code>last.pt</code>"
+  ],
+  "qa": [
+   [
+    "交叉熵为什么适合分类？",
+    "它直接衡量预测概率分布和真实标签的差距，重点惩罚“正确类概率给低了”的情况，和提高分类准确率方向完全一致。"
+   ],
+   [
+    "标签平滑（Label Smoothing）是什么？",
+    "把正确类的目标从绝对的 1 改成 0.9，其余 6 类分一点小数，防止模型过度自信（对应 A2 实验）。"
+   ],
+   [
+    "best.pt 按什么标准保存？",
+    "只按 PublicTest（验证集）准确率最高的那一轮保存，绝不看 PrivateTest。"
+   ]
+  ]
+ },
+ {
+  "t": "过拟合与数据增强",
+  "plain": [
+   "<b>什么是过拟合（Overfitting）</b>：就是<b>“死记硬背练习题”</b>——练习题（Training）考 99.8%，一换模拟考（PublicTest）只考 58%，中间差了 40 个百分点。",
+   "<b>对比曲线怎么看</b>：灰线是无增强的 <code>A0_s0</code>，第 17 轮后模拟考就卡死不动了；橙线是加了数据增强的 <code>A1_s0</code>，虽然练习题变难了（准确率爬得慢），但模拟考一路涨到 <b>68–69%</b>，真正学到了表情规律。",
+   "<b>数据来源</b>：图里的线不是示意图，是直接从真实训练日志 <code>runs/A0_s0/log.csv</code> 和 <code>runs/A1_s0/log.csv</code> 画出来的。"
+  ],
+  "say": "这张图是真实训练日志画出的曲线。不加数据增强的 A0，训练集冲到 99.8%，但验证集停在 58% 左右，差 40 个百分点，属于严重过拟合；加上数据增强（A1）后，训练题变难了，但验证集涨到了 68–69%，训练和验证的差距大幅缩小。",
+  "code": [
+   "<code>runs/A0_s0/log.csv</code>、<code>runs/A1_s0/log.csv</code>：每轮真实训练与验证记录",
+   "<code>utils.py</code> 第 134–149 行（<code>plot_curves</code>）：自动把 log.csv 画成 <code>curves.png</code>"
+  ],
+  "qa": [
+   [
+    "怎么判断模型过拟合了？",
+    "看曲线：训练集准确率很高（接近 100%），但验证集准确率远远低于训练集且不再上升甚至开始下降。"
+   ],
+   [
+    "除了数据增强，还用了哪些防过拟合手段？",
+    "权重衰减 weight decay 5e-4、早停（patience 20），并在 A3 实验中对比了 Dropout 0.4 和 RandomErasing。"
+   ],
+   [
+    "为什么 A1 的训练集准确率反而比 A0 低？",
+    "因为 A1 的训练准确率是在随机翻转、旋转、缩放后的“变难版图片”上算的，这正好说明模型没法死背原图了。"
+   ]
+  ]
+ },
+ {
+  "t": "消融实验与结论",
+  "plain": [
+   "<b>消融实验（Ablation）</b>：就是<b>控制变量做对照</b>——每次只加一个改动，其余条件完全不变，才能分清到底是谁在提分（配置定义在 <code>train.py</code> 的 <code>EXPERIMENTS</code>）。",
+   "<b>为什么要跑 3 个随机种子（均值 ± 标准差）</b>：神经网络初始化和打乱数据有随机性，只跑 1 次可能是撞大运；每组跑 3 个种子看波动范围（标准差约 0.3–0.6%），结论才站得住脚。",
+   "<b>六组对比结果</b>：<code>A0→A1</code> 加数据增强涨了 <b>+10.3 个百分点</b>（最硬核的提升）；<code>A2</code> 标签平滑、<code>A3</code> Dropout+随机擦除、<code>A5</code> 类别加权损失单模型都在波动内；<code>V1</code> 换成没有残差连接的 8 层 VGG 低了约 1 个点。另外在单种子上试了学习率和 batch size，<code>batch 64</code> 最高（71.05%）。"
+  ],
+  "say": "我们做了严格控制变量的消融实验，且每组跑 3 个随机种子报告均值和标准差。数据增强（A1）把验证集从 58.87% 提到 69.19%，远超随机波动；标签平滑（A2）、Dropout+随机擦除（A3）、类别加权（A5）单看都在波动范围内；换成 VGG（V1）比 ResNet18 低约 1 个百分点。超参数也对比了学习率和 batch size，batch 64 单次最好（71.05%）。",
+  "code": [
+   "<code>train.py</code> 第 36–41 行（<code>EXPERIMENTS</code>）：消融配置定义",
+   "<code>reports/model_selection.md</code>：A0–A3、A5、V1 与超参数的完整 PublicTest 记录"
+  ],
+  "qa": [
+   [
+    "为什么要跑 3 个随机种子？",
+    "单次训练有随机波动，项目要求任何改进结论都要有充分实验支撑，不能靠一次运气宣称某方法更好。"
+   ],
+   [
+    "为什么还试了 VGG 和类别加权？",
+    "对应 PPT 的改进方向：验证残差结构（ResNet18 vs VGG）和处理类别不平衡（A5 加权损失）是否有效；实验证明 ResNet18 优于 VGG，A5 单模型没超过 A1 但给集成提供了多样性。"
+   ]
+  ]
+ },
+ {
+  "t": "集成与翻转 TTA",
+  "plain": [
+   "<b>翻转 TTA（Test-Time Augmentation）</b>：考试时，把同一张脸<b>正着看一眼 + 左右镜像再看一眼</b>，把两次算出的概率取平均（写在 <code>utils.py</code> 的 <code>model_probs</code>）。每个模型开不开 TTA，由它自己在模拟考 PublicTest 上决定，结果存在 <code>summary.json</code>。",
+   "<b>9 模型集成（Ensemble）</b>：就是<b>9 个学霸集体投票</b>——把 A1、A2、A5 各 3 个种子共 9 个模型的预测概率取平均（写在 <code>evaluate.py</code>）。不同模型犯错的地方不一样，一平均就把错互相抵消了。",
+   "<b>先定方案，再考一次</b>：在 PublicTest 上比较后，9 模型 <b>71.69%</b> 超过 6 模型 71.52% 和单模型 71.05%；定死方案后，才在高考真题 PrivateTest 上跑一次，拿到 <b>73.50%</b>。"
+  ],
+  "say": "推理阶段结合了水平翻转 TTA 和多模型集成：TTA 是原图与翻转图各预测一次取概率平均，每个模型是否启用由它在 PublicTest 上的表现决定；集成是把 A1、A2、A5 共 9 个模型的概率再取平均。PublicTest 上九模型最高（71.69%），确定方案后由 evaluate.py 在 PrivateTest 上只跑了一次，得到 73.50%。",
+  "code": [
+   "<code>utils.py</code> 第 79–84 行（<code>model_probs</code>）：水平翻转 TTA 推理，评估和前端共用",
+   "<code>evaluate.py</code> 第 60–72 行：加载 9 个模型做概率平均，<b>唯一</b>读取 PrivateTest 的脚本",
+   "<code>reports/PrivateTest_ensemble9/</code>：最终 9 模型报告（<code>PrivateTest/</code> 为最佳单模型）"
+  ],
+  "qa": [
+   [
+    "为什么 PrivateTest（73.50%）比 PublicTest（71.69%）还高？",
+    "两个子集图片不同，本来就有自然差异；因为我们全程没在 PrivateTest 上做过任何选择，这是真实的一次性泛化结果。"
+   ],
+   [
+    "九模型比六模型在验证集只高 0.17%，为什么换？",
+    "事先定好了换方案规则：只要新集成在 PublicTest 超过 71.52% 就换，遵守事先约定不事后改标准；最终 PrivateTest 也从 73.11% 提到了 73.50%。"
+   ]
+  ]
+ },
+ {
+  "t": "结果分析",
+  "plain": [
+   "<b>召回率（Recall）是什么</b>：就是“某一类真实表情里，模型抓对了多少”。比如 879 张笑脸抓对了 802 张，快乐的召回率就是 <b>91.2%</b>。",
+   "<b>混淆矩阵（Confusion Matrix）是什么</b>：就是一张“错题流向表”，看模型最爱把哪种表情误认成哪种。比如 <b>恐惧</b> 召回最低（51.1%），528 张里有 94 张被认成悲伤、68 张被认成愤怒；悲伤有 112 张被认成中性。",
+   "<b>为什么会混</b>：48×48 灰度图分辨率很低，而且恐惧/悲伤/愤怒在皱眉瞪眼时本身就很接近，连人眼看都会犹豫。"
+  ],
+  "say": "从 PrivateTest 的分类报告和混淆矩阵看，快乐（91.2%）和惊讶（83.4%）表情特征最明显、识别最好；恐惧召回最低（51.1%），最常被误认成悲伤（94 张）和愤怒（68 张），悲伤也常被认成中性（112 张）。主要受限于 48×48 灰度图分辨率低以及这几类表情本身相似度高。",
+  "code": [
+   "<code>reports/PrivateTest_ensemble9/classification_report.txt</code>：各类精确率、召回率、F1",
+   "<code>reports/PrivateTest_ensemble9/confusion_matrix.png</code>：混淆矩阵热力图"
+  ],
+  "qa": [
+   [
+    "召回率和总准确率有什么区别？",
+    "总准确率是全部 3589 张图里一共猜对的比例（73.50%）；召回率是单看某一个表情类别里猜对的比例，能暴露少数类或难类的短板。"
+   ],
+   [
+    "怎么改进恐惧类？",
+    "我们试过 A5 类别加权损失，单模型没有超过 A1；根本瓶颈在于 48×48 像素太低且数据集标签本身有歧义，进一步提升需要更高清的数据或更强模型。"
+   ]
+  ]
+ },
+ {
+  "t": "网页演示",
+  "plain": [
+   "<b>为什么不能把高清自拍直接喂给模型</b>：模型只在 48×48 的黑白正脸图上学过，直接喂高清彩色大图等于换了考卷，准确率会暴跌。",
+   "<b><code>app.py</code> 做的 4 步转换</b>：① 用 OpenCV 内置的 <b>YuNet</b> 框出人脸和双眼；② 按双眼连线角度把歪头转正（<code>align_crop</code>）；③ 裁一个 1.2 倍正方形并缩成 48×48 灰度图；④ 调用和评估完全一样的 <code>preprocess_face</code> + 9 模型 + TTA。",
+   "<b>为什么实时摄像头不卡</b>：后端只在 320px 缩略图上检测，只把几百字节的人脸框坐标和概率发回浏览器，由前端 JS 在视频上叠一层 Canvas 画框，不来回传整张图片。"
+  ],
+  "say": "网页演示写在 app.py，支持实时摄像头和上传拍照。核心思路是把任意照片先处理成 FER2013 的样子：用 YuNet 找人脸并按双眼转正，裁成 48×48 灰度图，再走与 evaluate.py 完全一致的预处理、9 模型集成和 TTA。前端只做演示，不参与任何测试集打分。",
+  "code": [
+   "<code>app.py</code> 第 49–85 行（<code>detect_faces / align_crop</code>）：YuNet 检测与双眼转正裁剪",
+   "<code>app.py</code> 第 100–149 行（<code>ensemble_probs / predict / detect_live</code>）：批量集成推理",
+   "<code>dataset.py</code> 第 123–127 行（<code>preprocess_face</code>）：与评估共享的预处理入口"
+  ],
+  "qa": [
+   [
+    "为什么界面里“模型看到的人脸”那么糊？",
+    "因为展示的就是模型真实收到的 48×48 灰度图；如果想直接吃高清图，必须换高分辨率数据集重新训练。"
+   ],
+   [
+    "真实摄像头里准确率也能到 73.50% 吗？",
+    "不一定。73.50% 是 FER2013 测试集上的成绩，真实摄像头的光线、角度和人脸分布都不同，表情明显一些会更准。"
+   ]
+  ]
+ },
+ {
+  "t": "数据用途与自查",
+  "plain": [
+   "<b>防数据泄漏的红线</b>：平时只用 <code>Training</code> 练，所有挑模型、调超参数、定 TTA 和集成全只用 <code>PublicTest</code>，<code>PrivateTest</code> 只在全部定案后由 <code>evaluate.py</code> 跑一次。",
+   "<b>怎么用代码自证清白</b>：不是靠嘴说，而是写了 <b>9 项 <code>pytest</code> 自动测试</b>（<code>tests/test_pipeline.py</code>），自动检查训练过程绝不读 PrivateTest、源码里只有极少数文件出现 PrivateTest、前端和评估误差小于 <code>1e-5</code>、且不会误覆盖已有模型。",
+   "<b>一键复核脚本</b>：验收现场双击 <code>scripts/verify_test.bat</code> 就能直接复现 <b>73.50%</b>（9 模型）或 <b>71.97%</b>（最佳单模型）。"
+  ],
+  "say": "整个项目严格遵守三划分协议：Training 训练，PublicTest 做一切选择，PrivateTest 只做最终评估。我们用 tests/test_pipeline.py 里的 9 项自动测试做硬性校验，确保训练绝不读取 PrivateTest、前端和评估预处理完全一致，现场可以直接用 verify_test.bat 复核 73.50%。",
+  "code": [
+   "<code>tests/test_pipeline.py</code>：9 项自动测试（防泄漏、防覆盖、一致性检查）",
+   "<code>scripts/verify_test.bat</code>：Windows 一键复核 73.50% / 71.97%",
+   "<code>references/references.yaml</code>：参考项目与开源模型说明"
+  ],
+  "qa": [
+   [
+    "怎么证明没有用测试集调参？",
+    "<code>train.py</code> 只读 Training 和 PublicTest，<code>tests/test_pipeline.py</code> 会自动监听并静态扫描源码，确认训练相关文件里绝不出现 PrivateTest。"
+   ],
+   [
+    "现场怎么复现？",
+    "双击 <code>scripts/verify_test.bat</code>（或运行 <code>python evaluate.py</code>）选 1 得 73.50%，选 2（<code>--single</code>）得最佳单模型 71.97%；重训用 <code>python train.py --exp A1 --seed 0 --out runs_local</code>。"
+   ],
+   [
+    "参考来源和代码是怎么完成的？",
+    "思路参考了 GitHub 上 LetheSec 的项目（ResNet 首层改 3×3、去 maxpool、数据增强等），但修正了原仓库拿 PrivateTest 选模型的问题，未使用其权重；整体方案和实验思路是我自己选定的，代码实现借助 AI 辅助编写完成；网页演示中的 YuNet（OpenCV Zoo）仅用于框人脸，不参与任何评估。"
+   ]
+  ]
+ }
 ];
 
 // ===== 工具 =====
@@ -317,7 +565,7 @@ const BUILD = [
      .from(A(sc,"sub"),{y:20,opacity:0,duration:.6},"-=.4")
      .from(box.children,{y:60,opacity:0,scale:.6,stagger:.09,duration:.7,ease:"back.out(1.6)"},"-=.2")
      .from(A(sc,"score"),{opacity:0,duration:.4})
-     .to(n,{v:73.11,duration:1.6,ease:"power2.out",onUpdate:()=>$("#score0").textContent=n.v.toFixed(2)},"<");
+     .to(n,{v:73.50,duration:1.6,ease:"power2.out",onUpdate:()=>$("#score0").textContent=n.v.toFixed(2)},"<");
    return tl; },
 
  // 1 数据：像素串打出 → 图像逐行出现 → 划分条 → 类别分布
@@ -426,7 +674,7 @@ const BUILD = [
 
  // 5 过拟合：真实曲线
  sc => { const g=$("#chart5"); g.innerHTML="";
-   const X0=70, Y0=460, W=780, H=420, xm=70, ymin=20, ymax=100;
+   const X0=70, Y0=460, W=680, H=420, xm=70, ymin=20, ymax=100;
    const px=e=>X0+(e/xm)*W, py=v=>Y0-(v-ymin)/(ymax-ymin)*H, ax=S("g",{},g);
    for(let v=20; v<=100; v+=20){ S("line",{x1:X0,x2:X0+W,y1:py(v),y2:py(v),stroke:"#ece8de"},ax); T(ax,X0-12,py(v)+5,v+"%",{"text-anchor":"end","font-size":14}); }
    for(let e=0;e<=70;e+=10) T(ax,px(e),Y0+24,e,{"text-anchor":"middle","font-size":14});
@@ -465,13 +713,13 @@ const BUILD = [
    const X0=90, Y0=400, H=320, ymin=50, ymax=75, py=v=>Y0-(v-ymin)/(ymax-ymin)*H, ax=S("g",{},g);
    for(let v=50; v<=70; v+=5){ S("line",{x1:X0,x2:1150,y1:py(v),y2:py(v),stroke:"#ece8de"},ax); T(ax,X0-12,py(v)+5,v+"%",{"text-anchor":"end","font-size":14}); }
    const bars=[], errs=[], labs=[];
-   ABL.forEach((a,i)=>{ const x=X0+60+i*260, w=140, col=i===0?"#b9b2a2":i===1?"#d97757":"#e3b6a3";
+   ABL.forEach((a,i)=>{ const x=X0+25+i*174, w=112, col=i===0?"#b9b2a2":i===1?"#d97757":i===5?"#6a8caf":"#e3b6a3";
      bars.push(S("rect",{x,y:py(a.m),width:w,height:Y0-py(a.m),rx:8,fill:col},g));
      const eg=S("g",{},g); S("line",{x1:x+w/2,x2:x+w/2,y1:py(a.m+a.s),y2:py(a.m-a.s),stroke:"#1f1e1d","stroke-width":2},eg);
-     [a.m+a.s,a.m-a.s].forEach(v=>S("line",{x1:x+w/2-12,x2:x+w/2+12,y1:py(v),y2:py(v),stroke:"#1f1e1d","stroke-width":2},eg)); errs.push(eg);
-     const lg=S("g",{},g); T(lg,x+w/2,py(a.m+a.s)-14,`${a.m.toFixed(2)} ± ${a.s.toFixed(2)}`,{"text-anchor":"middle","font-size":17,fill:"#1f1e1d","font-weight":600});
-     T(lg,x+w/2,Y0+28,a.k,{"text-anchor":"middle","font-size":18,fill:"#1f1e1d","font-weight":600}); T(lg,x+w/2,Y0+52,a.d,{"text-anchor":"middle","font-size":15}); labs.push(lg); });
-   const br=S("g",{},g); const x1=X0+60+70, x2=X0+320+70, yb=py(74.2);
+     [a.m+a.s,a.m-a.s].forEach(v=>S("line",{x1:x+w/2-10,x2:x+w/2+10,y1:py(v),y2:py(v),stroke:"#1f1e1d","stroke-width":2},eg)); errs.push(eg);
+     const lg=S("g",{},g); T(lg,x+w/2,py(a.m+a.s)-12,`${a.m.toFixed(2)}±${a.s.toFixed(2)}`,{"text-anchor":"middle","font-size":14,fill:"#1f1e1d","font-weight":600});
+     T(lg,x+w/2,Y0+28,a.k,{"text-anchor":"middle","font-size":17,fill:"#1f1e1d","font-weight":600}); T(lg,x+w/2,Y0+50,a.d,{"text-anchor":"middle","font-size":14}); labs.push(lg); });
+   const br=S("g",{},g); const x1=X0+25+56, x2=X0+25+174+56, yb=py(74.2);
    S("path",{d:`M${x1} ${py(60.5)} V${yb} H${x2} V${py(72.4)}`,fill:"none",stroke:"#c96442","stroke-width":2.5,"stroke-dasharray":"6 4"},br);
    T(br,(x1+x2)/2,yb-10,"+10.3 个百分点",{"text-anchor":"middle","font-size":18,fill:"#c96442","font-weight":600});
    const tl=gsap.timeline({defaults:E});
@@ -486,16 +734,16 @@ const BUILD = [
  sc => { const t=$("#tta7"); t.innerHTML="";
    div(`<div style="font-weight:600;margin-bottom:10px">翻转 TTA</div><div style="display:flex;align-items:center;gap:14px"><img class="px" src="${png(5)}" style="width:84px;height:84px" alt=""><span class="lbl">+</span><img class="px fl" src="${png(5)}" style="width:84px;height:84px;transform:scaleX(-1)" alt=""><span class="lbl">→ 两次概率取平均</span></div>`,"",t);
    const e=$("#ens7"); e.innerHTML="";
-   div(`<div style="font-weight:600;margin-bottom:10px">6 模型集成（A1、A2 各 3 个种子）</div><div class="ms" style="display:flex;gap:8px;flex-wrap:wrap"></div><div class="avg lbl" style="margin-top:12px">→ 6 份概率取平均 → 最终预测</div>`,"",e);
-   ["A1_s0","A1_s1","A1_s2","A2_s0","A2_s1","A2_s2"].forEach(n=>div(n,"",$(".ms",e)).className="chip mono");
+   div(`<div style="font-weight:600;margin-bottom:8px">9 模型集成（A1、A2、A5 各 3 个种子）</div><div class="ms" style="display:flex;gap:6px;flex-wrap:wrap"></div><div class="avg lbl" style="margin-top:8px">→ 9 份概率取平均 → 最终预测</div>`,"",e);
+   ["A1_s0","A1_s1","A1_s2","A2_s0","A2_s1","A2_s2","A5_s0","A5_s1","A5_s2"].forEach(n=>div(n,"padding:6px 12px;font-size:14px",$(".ms",e)).className="chip mono");
    const g=$("#sel7"); g.innerHTML=""; T(g,20,22,"PublicTest 上比较四种方案（用于选择）",{"font-size":16,fill:"#1f1e1d","font-weight":600});
-   const X0=150, W=520, vmin=69, vmax=72, pw=v=>(v-vmin)/(vmax-vmin)*W;
+   const X0=175, W=485, vmin=69.5, vmax=72.2, pw=v=>(v-vmin)/(vmax-vmin)*W;
    const bars=SEL.map(([n,v],i)=>{ const y=50+i*56, best=i===3;
      T(g,X0-14,y+24,n,{"text-anchor":"end","font-size":16,fill:"#1f1e1d"});
      const r=S("rect",{x:X0,y,width:pw(v),height:34,rx:6,fill:best?"#d97757":"#cfc9bb"},g);
      T(g,X0+pw(v)+10,y+23,v.toFixed(2)+"%",{"font-size":16,fill:best?"#c96442":"#5e5d59","font-weight":best?700:400});
      return r; });
-   T(g,X0,290,"横轴从 69% 开始，放大了差距",{"font-size":13,fill:"#8f8c84"});
+   T(g,X0,290,"横轴从 69.5% 开始，放大了差距",{"font-size":13,fill:"#8f8c84"});
    const tl=gsap.timeline({defaults:E});
    tl.from(t,{opacity:0,y:20,duration:.5}).from($(".fl",t),{scaleX:1,duration:.7,ease:"power2.inOut"})
      .from(e,{opacity:0,y:20,duration:.5}).from($$(".chip",e),{opacity:0,scale:.6,stagger:.1,duration:.35,ease:"back.out(2)"}).from($(".avg",e),{opacity:0,duration:.4})
@@ -514,7 +762,7 @@ const BUILD = [
      T(g,X0+W*v/100+10,y+25,v.toFixed(1)+"%",{"font-size":16,fill:low?"#c96442":"#5e5d59","font-weight":low?700:400}); return r; });
    const c=$("#conf8"); c.innerHTML="";
    div("最常见的认错（混淆矩阵）","font-weight:600;margin-bottom:12px",c);
-   [["恐惧","悲伤",100,528],["悲伤","中性",113,594],["恐惧","愤怒",66,528],["愤怒","悲伤",69,491]].forEach(([a,b,n,tot])=>div(`<span style="font-size:18px">${a} <span class="clay">→</span> ${b}</span><span class="num" style="margin-left:auto;font-size:22px">${n}<span class="lbl" style="font-size:14px"> / ${tot}</span></span>`,"display:flex;align-items:center;padding:14px 18px;margin-bottom:10px",c).className="card cf");
+   [["悲伤","中性",112,594],["恐惧","悲伤",94,528],["恐惧","愤怒",68,528],["愤怒","悲伤",62,491]].forEach(([a,b,n,tot])=>div(`<span style="font-size:18px">${a} <span class="clay">→</span> ${b}</span><span class="num" style="margin-left:auto;font-size:22px">${n}<span class="lbl" style="font-size:14px"> / ${tot}</span></span>`,"display:flex;align-items:center;padding:14px 18px;margin-bottom:10px",c).className="card cf");
    div("这几种表情在 48×48 小图里本来就很像；厌恶训练样本只有 436 张，但最难的是恐惧。","margin-top:8px;line-height:1.7",c).className="lbl";
    const tl=gsap.timeline({defaults:E});
    tl.from(g.querySelectorAll("text"),{opacity:0,duration:.3,stagger:.02}).from(bars,{attr:{width:0},stagger:.12,duration:.7},"<")
@@ -524,7 +772,7 @@ const BUILD = [
  // 9 前端流程
  sc => { $("#img9").src=png(3); $("#img9b").src=png(3);
    const s=$("#steps9"); s.innerHTML="";
-   ["① YuNet 找到人脸","② 按双眼转正","③ 裁 1.2 倍正方形","④ 灰度、缩到 48×48","⑤ 同样的预处理 + 6 模型 + TTA"].forEach((t,i)=>div(t,"",s).className="chip"+(i===4?" hot":""));
+   ["① YuNet 找到人脸","② 按双眼转正","③ 裁 1.2 倍正方形","④ 灰度、缩到 48×48","⑤ 同样的预处理 + 9 模型 + TTA"].forEach((t,i)=>div(t,"",s).className="chip"+(i===4?" hot":""));
    const p=$("#prob9"); p.innerHTML=""; div("7 类概率（示意）","margin-bottom:6px",p).className="lbl";
    [.03,.0,.02,.86,.02,.03,.04].forEach((v,i)=>div(`<span style="width:56px;font-size:14px">${CLS[i].split(" ")[0]}</span><span style="flex:1;height:10px;background:#ece8de;border-radius:5px;overflow:hidden"><i class="pb" style="display:block;height:100%;width:${v*100}%;background:${i===3?"var(--clay)":"#b9b2a2"}"></i></span>`,"display:flex;align-items:center;gap:10px;margin:5px 0",p));
    const tl=gsap.timeline({defaults:E});
@@ -538,8 +786,8 @@ const BUILD = [
 
  // 10 数据用途规则
  sc => { const r=$("#rule10"); r.innerHTML="";
-   [["Training","28,709","只用来训练（更新参数）","var(--sage)"],["PublicTest","3,589","选模型、选 TTA、选集成方案","var(--sky)"],["PrivateTest","3,589","方案确定后评估一次：73.11%","var(--clay)"]].forEach(([n,c,u,col])=>div(`<div style="height:8px;background:${col};border-radius:4px;margin-bottom:14px"></div><div style="font-size:22px;font-weight:600">${n}</div><div class="num" style="font-size:18px;color:var(--ink2);margin:4px 0 10px">${c} 张</div><div style="font-size:17px;line-height:1.6">${u}</div>`,"width:370px;padding:22px",r).className="card");
-   $("#tests10").innerHTML="✓ 三个子集数量与标签范围 &nbsp; ✓ 均值/标准差只来自 Training &nbsp; ✓ 模型输出形状<br>✓ 前端预处理 = 评估预处理 &nbsp; ✓ 训练过程从不读取 PrivateTest，且能断点续训<br>✓ 源码里只有少数文件出现 PrivateTest &nbsp; ✓ 前端推理 = 评估推理（误差 &lt; 1e-5）<br>✓ 训练不会覆盖已有模型";
+   [["Training","28,709","只用来训练（更新参数）","var(--sage)"],["PublicTest","3,589","选模型、选 TTA、选集成方案","var(--sky)"],["PrivateTest","3,589","方案确定后评估一次：73.50%","var(--clay)"]].forEach(([n,c,u,col])=>div(`<div style="height:8px;background:${col};border-radius:4px;margin-bottom:14px"></div><div style="font-size:22px;font-weight:600">${n}</div><div class="num" style="font-size:18px;color:var(--ink2);margin:4px 0 10px">${c} 张</div><div style="font-size:17px;line-height:1.6">${u}</div>`,"width:370px;padding:22px",r).className="card");
+   $("#tests10").innerHTML="✓ 三个子集数量与标签范围 &nbsp; ✓ 均值/标准差只来自 Training &nbsp; ✓ 模型输出形状<br>✓ 前端预处理 = 评估预处理 &nbsp; ✓ 训练过程从不读取 PrivateTest，且能断点续训<br>✓ 源码里只有少数文件出现 PrivateTest &nbsp; ✓ 前端推理 = 评估推理（误差 &lt; 1e-5）<br>✓ 训练不会覆盖已有模型 &nbsp; ✓ 最终 9 模型与最佳单模型权重齐备";
    const tl=gsap.timeline({defaults:E});
    tl.from(r.children,{opacity:0,y:30,stagger:.25,duration:.6}).from(A(sc,"tests"),{opacity:0,y:20,duration:.6},"+=.2");
    return tl; },
@@ -550,7 +798,8 @@ let cur=0, tl=null, paused=false;
 const scenes=$$(".scene"), scrub=$("#scrub"), playBtn=$("#play");
 function fit(){ const m=$("#main"), s=Math.min(m.clientWidth/1280, m.clientHeight/720); $("#stage").style.transform=`translate(-50%,-50%) scale(${s})`; }
 function renderNotes(i){ const n=NOTES[i];
-  $("#notes").innerHTML=`<h2>${i}. ${n.t}</h2><h3>怎么讲</h3><p>${n.say}</p><h3>代码在哪</h3><ul>${n.code.map(c=>`<li>${c}</li>`).join("")}</ul><h3>助教可能问</h3>${n.qa.map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join("")}`;
+  const plainHtml = n.plain ? `<h3>人话先看懂（术语 + 文件）</h3><div class="plain"><ul>${n.plain.map(p=>`<li>${p}</li>`).join("")}</ul></div>` : "";
+  $("#notes").innerHTML=`<h2>${i}. ${n.t}</h2>${plainHtml}<h3>验收怎么讲</h3><p>${n.say}</p><h3>代码在哪</h3><ul>${n.code.map(c=>`<li>${c}</li>`).join("")}</ul><h3>助教可能问</h3>${n.qa.map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join("")}`;
   $("#chapName").textContent=`${i+1} / ${NOTES.length} · ${n.t}`; }
 function go(i){ cur=(i+scenes.length)%scenes.length;
   if(tl){ tl.revert(); tl.kill(); }
