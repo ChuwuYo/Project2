@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FER 人脸表情识别 · 项目讲解动画</title>
+<!--
+  项目讲解动画（单文件，离线可用）
+  - 动画库：GSAP 3（已内嵌，无需联网）
+  - 操作：← / → 切换章节，空格 暂停/继续，R 重播本章，N 显示/隐藏讲稿
+  - 结构：每一章 = 左边一个动画舞台 + 右边讲稿（怎么讲 / 代码在哪 / 可能被问）
+  - 所有数字来自项目的 reports/ 与 runs/，标“示意”的除外
+-->
+<link rel="stylesheet" href="./src/styles/base.css">
+<link rel="stylesheet" href="./src/styles/responsive.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header><span class="mark">✻</span><h1>FER 人脸表情识别 · 项目讲解</h1><span class="chap" id="chapName"></span></header>
+  <main id="main"><div class="stage" id="stage"></div></main>
+  <aside id="notes" aria-live="polite"></aside>
+  <footer>
+    <button id="prev" aria-label="上一章">←</button>
+    <button id="play" aria-label="暂停或播放">❚❚</button>
+    <button id="replay" aria-label="重播本章">↺</button>
+    <button id="next" aria-label="下一章">→</button>
+    <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="本章进度">
+    <div class="dots" id="dots"></div>
+    <button id="toggleNotes" aria-label="显示或隐藏讲稿">讲稿</button>
+    <span class="hint">← → 换章 · 空格 暂停 · R 重播 · N 讲稿</span>
+  </footer>
+</div>
+
+<script src="./vendor/gsap-3.15.0.min.js"></script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
